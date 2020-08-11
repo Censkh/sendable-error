@@ -1,0 +1,18 @@
+import {SendableErrorBuilder} from "./Builder";
+
+export type ErrorParserFunction = (error: Error, builder: SendableErrorBuilder) => SendableErrorBuilder;
+
+export type ErrorParser = {
+  id: string;
+  func: ErrorParserFunction;
+};
+
+const parsers: ErrorParser[] = [];
+
+export const addErrorParser = (parser: ErrorParser) => {
+  parsers.push(parser);
+};
+
+export const getErrorParsers = () => {
+  return parsers;
+};

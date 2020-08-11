@@ -2,6 +2,9 @@ import {v5 as uuid}               from "uuid";
 import ErrorCode                  from "./ErrorCode";
 import {ErrorOptions, Response}   from "./ErrorTypes";
 import {CODE_MISC_INTERNAL_ERROR} from "./DefaultCodes";
+import {getErrorLogger}                                    from "./Logger";
+import {ErrorParser, ErrorParserFunction, getErrorParsers} from "./Parser";
+import {SendableErrorBuilder, SendableErrorBuilderBase}    from "./Builder";
 
 export const DEFAULT_ERROR_OPTIONS: Required<ErrorOptions> = {
   statusCode : 500,
@@ -26,19 +29,6 @@ export function getTraceId(error: Error): string {
   return uuid(errorString, uuid.URL);
 }
 
-export type Logger = (options: Required<ErrorOptions>, source: string, message: string, error: SendableError, info: any) => void;
-
-export const defaultLogger: Logger = (options, source, message, error, info) => {
-  if (options.severity !== "error") {
-    console[options.severity](source || `ErrorUtils::log`, message, info);
-  } else {
-    console.error(source || `ErrorUtils::log`, message, info);
-    console.error(error);
-  }
-};
-
-const logger = defaultLogger;
-
 export type Scope = "private" | "public";
 
 const scopeValues: Scope[] = ["private", "public"];
@@ -58,12 +48,16 @@ export const computedScopedValue = <T>(scope: Scope, value: ScopedValue<T> | nul
   return value as T;
 };
 
+export const isSendableError = (error: Error): error is SendableError => {
+  return error instanceof SendableError;
+};
+
 const DEFAULT_DETAILS = {};
 
 /**
  * An error with a known cause that is sendable
  */
-export default class SendableError extends Error {
+export default class SendableError extends Error implements SendableErrorBuilderBase {
 
   private _code: ErrorCode | null               = null;
   private _defaultCode!: ErrorCode;
@@ -75,21 +69,16 @@ export default class SendableError extends Error {
 
   private _logged = false;
 
-  public static of(codeOrError: ErrorCode | Error) {
-    if (codeOrError instanceof Error) {
-      const error = codeOrError as Error;
+  public static of(codeOrError: ErrorCode | Error, parser?: ErrorParserFunction) {
+    const builder = new SendableErrorBuilder();
 
-      if (error instanceof SendableError) {
-        return error;
+    if (parser) {
+      if (codeOrError instanceof Error && !isSendableError(codeOrError)) {
+        parser(codeOrError, builder);
       }
-
-      Object.setPrototypeOf(error, SendableError.prototype);
-      const sendable = error as SendableError;
-      sendable.init();
-      return sendable;
     }
-    const code = codeOrError;
-    return new SendableError(code.defaultMessage, code);
+
+    return builder.build(codeOrError);
   }
 
   private constructor(message: string, code?: ErrorCode) {
@@ -202,7 +191,7 @@ export default class SendableError extends Error {
       delete info.originalMessage;
     }
 
-    logger(computedOptions, source, loggedMessage, this, info);
+    getErrorLogger()(computedOptions, source, loggedMessage, this, info);
 
     return this;
   };
