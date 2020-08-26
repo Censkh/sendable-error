@@ -1,6 +1,6 @@
-import ErrorCode         from "./ErrorCode";
-import {ErrorOptions}               from "./ErrorTypes";
-import SendableError, {ScopedValue} from "./SendableError";
+import ErrorCode                   from "./ErrorCode";
+import {ErrorOptions, ScopedValue} from "./Types";
+import SendableError               from "./SendableError";
 import {getErrorParsers}            from "./Parser";
 
 const DEFAULT_DETAILS = {};
@@ -21,8 +21,8 @@ export class SendableErrorBuilder implements SendableErrorBuilderBase {
   private _code: ErrorCode | null               = null;
   private _defaultCode!: ErrorCode;
   private _messages: ScopedValue<string> | null = null;
-  private _options: ErrorOptions | null = null;
-  private _details: ScopedValue<Object> = DEFAULT_DETAILS;
+  private _options: ErrorOptions | null         = null;
+  private _details: ScopedValue<Object>         = DEFAULT_DETAILS;
 
   code(code: ErrorCode): this {
     this._code = code;
@@ -69,7 +69,7 @@ export class SendableErrorBuilder implements SendableErrorBuilderBase {
       }
     } else {
       const code = codeOrError;
-      result = new (SendableError as any)(code.defaultMessage, code);
+      result     = new (SendableError as any)(code.defaultMessage, code);
     }
 
     if (this._code) {

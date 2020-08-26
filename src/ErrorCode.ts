@@ -1,5 +1,5 @@
 import SendableError  from "./SendableError";
-import {ErrorOptions} from "./ErrorTypes";
+import {ErrorOptions} from "./Types";
 
 export default class ErrorCode {
 

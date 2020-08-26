@@ -20,3 +20,7 @@ export interface ErrorOptions {
   severity?: Severity,
   displayName?: string,
 }
+
+export type Scope = "private" | "public";
+
+export type ScopedValue<T> = T | Partial<Record<Scope, T>>;

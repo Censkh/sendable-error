@@ -1,10 +1,10 @@
-import {v5 as uuid}               from "uuid";
-import ErrorCode                  from "./ErrorCode";
-import {ErrorOptions, Response}   from "./ErrorTypes";
-import {CODE_MISC_INTERNAL_ERROR} from "./DefaultCodes";
-import {getErrorLogger}                                    from "./Logger";
-import {ErrorParser, ErrorParserFunction, getErrorParsers} from "./Parser";
-import {SendableErrorBuilder, SendableErrorBuilderBase}    from "./Builder";
+import {v5 as uuid}                                     from "uuid";
+import ErrorCode                                        from "./ErrorCode";
+import {ErrorOptions, Response, Scope, ScopedValue}     from "./Types";
+import {CODE_MISC_INTERNAL_ERROR}                       from "./DefaultCodes";
+import {getErrorLogger}                                 from "./Logger";
+import {ErrorParserFunction}                            from "./Parser";
+import {SendableErrorBuilder, SendableErrorBuilderBase} from "./Builder";
 
 export const DEFAULT_ERROR_OPTIONS: Required<ErrorOptions> = {
   statusCode : 500,
@@ -21,6 +21,8 @@ export function getErrorName(error: Error): string {
   return error.constructor.name;
 }
 
+const scopeValues: Scope[] = ["private", "public"];
+
 /**
  * Transforms an error into a deterministic error identifier to enable easy log searching
  */
@@ -28,12 +30,6 @@ export function getTraceId(error: Error): string {
   const errorString = error.stack || error.toString();
   return uuid(errorString, uuid.URL);
 }
-
-export type Scope = "private" | "public";
-
-const scopeValues: Scope[] = ["private", "public"];
-
-export type ScopedValue<T> = T | Partial<Record<Scope, T>>;
 
 export const computedScopedValue = <T>(scope: Scope, value: ScopedValue<T> | null | undefined, defaultValue: T): T => {
   if (value === null || value === undefined) {

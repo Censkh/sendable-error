@@ -1,4 +1,4 @@
-import {ErrorOptions} from "./ErrorTypes";
+import {ErrorOptions} from "./Types";
 import SendableError  from "./SendableError";
 
 export type ErrorLogger = (options: Required<ErrorOptions>, source: string, message: string, error: SendableError, info: any) => void;
@@ -16,8 +16,8 @@ let currentLogger = defaultErrorLogger;
 
 export const setErrorLogger = (logger: ErrorLogger): void => {
   currentLogger = logger;
-}
+};
 
 export const getErrorLogger = (): ErrorLogger => {
   return currentLogger;
-}
+};

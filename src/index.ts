@@ -1,4 +1,4 @@
-export * from "./ErrorTypes";
+export * from "./Types";
 export * from "./DefaultCodes";
 export * from "./Logger";
 export * from "./Parser";
@@ -6,8 +6,9 @@ export * from "./Parser";
 export {default as ErrorCode} from "./ErrorCode";
 
 import {default as SendableError} from "./SendableError";
+
 export default SendableError;
 
 export {
   SendableError,
-}
+};
