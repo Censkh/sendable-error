@@ -5,6 +5,9 @@ export * from "./Parser";
 
 export {default as ErrorCode} from "./ErrorCode";
 
-import {default as _SendableError} from "./SendableError";
-export const SendableError = _SendableError;
+import {default as SendableError} from "./SendableError";
 export default SendableError;
+
+export {
+  SendableError,
+}

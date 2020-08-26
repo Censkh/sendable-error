@@ -1,6 +1,6 @@
 {
   "name": "sendable-error",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "main": "cjs/index.js",
   "types": "esm/index.d.ts",
   "module": "esm/index.js",
@@ -12,8 +12,8 @@
     "cleanup": "rimraf esm && rimraf cjs",
     "build:clean": "npm run cleanup && npm run build",
     "build": "npm run build:esm && npm run build:cjs",
-    "build:esm": "tsc --module es2015 --target es5 --outDir esm",
-    "build:cjs": "tsc --module commonjs --target es5 --outDir cjs",
+    "build:esm": "tsc --module es2015 --outDir esm",
+    "build:cjs": "tsc --module commonjs --outDir cjs",
     "build:watch": "npm-run-all -p \"build:esm -- -w\" \"build:cjs -- -w\""
   },
   "devDependencies": {

@@ -12,7 +12,7 @@ Composable errors to simplify creating useful failure responses for APIs
 - Error codes to easily identify error types on the client side
 - Public and private messages & details so your APIs don't leak technical information yet retaining verbose logging
 - Trace IDs allow you to identify specific errors and allows user's to point you in the right direction when they encounter a bug
-- A customiazable logger interface
+- A customizable logger interface
 
 ## Getting Started
 
