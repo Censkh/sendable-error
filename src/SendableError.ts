@@ -31,17 +31,24 @@ export function getTraceId(error: Error): string {
   return uuid(errorString, uuid.URL);
 }
 
-export const computedScopedValue = <T>(scope: Scope, value: ScopedValue<T> | null | undefined, defaultValue: T): T => {
-  if (value === null || value === undefined) {
-    return defaultValue;
-  }
-
-  if (typeof value === "object") {
-    if (Object.keys(value).some(key => scopeValues.includes(key as any))) {
-      return (value as any)[scope] ?? defaultValue;
+export const computedScopedValue = <T>(scope: Scope, values: Array<ScopedValue<T> | null | undefined>, defaultValue?: T): T | undefined => {
+  for (const value of values) {
+    if (value !== null && value !== undefined) {
+      if (typeof value === "object") {
+        if (Object.keys(value).some(key => scopeValues.includes(key as any))) {
+          const scopedValue = (value as any)[scope];
+          if (scopedValue !== undefined) {
+            return scopedValue;
+          } else {
+            continue;
+          }
+        }
+      }
+      return value as T;
     }
   }
-  return value as T;
+
+  return defaultValue;
 };
 
 export const isSendableError = (error: Error): error is SendableError => {
@@ -100,7 +107,10 @@ export default class SendableError extends Error implements SendableErrorBuilder
   };
 
   getMessage(scope: Scope): string {
-    return computedScopedValue(scope, this._messages, scope === "public" ? this.getCode().defaultMessage : this.message);
+    return computedScopedValue<string>(scope, [this._messages, this.getCode().defaultMessage, {
+      public : CODE_MISC_INTERNAL_ERROR.defaultMessage as string,
+      private: this.message,
+    }])!;
   };
 
   details(details: ScopedValue<Object>): this {
@@ -158,7 +168,7 @@ export default class SendableError extends Error implements SendableErrorBuilder
         code   : this.getCode().id,
         message: this.getMessage("public"),
         traceId: traceId,
-        details: computedScopedValue("public", this._details, DEFAULT_DETAILS),
+        details: computedScopedValue("public", [this._details, DEFAULT_DETAILS]),
       });
     }
     return this;
@@ -179,7 +189,7 @@ export default class SendableError extends Error implements SendableErrorBuilder
       traceId        : traceId,
       code           : this.getCode().id,
       originalMessage: this.message,
-      ...computedScopedValue("private", this._details, DEFAULT_DETAILS),
+      ...computedScopedValue("private", [this._details, DEFAULT_DETAILS]),
       ...(info || {}),
     };
 

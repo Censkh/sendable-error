@@ -1,14 +1,14 @@
-import SendableError  from "./SendableError";
-import {ErrorOptions} from "./Types";
+import SendableError               from "./SendableError";
+import {ErrorOptions, ScopedValue} from "./Types";
 
 export default class ErrorCode {
 
   readonly prefix: string;
   readonly id: string;
-  readonly defaultMessage: string;
+  readonly defaultMessage: ScopedValue<string>;
   readonly options: ErrorOptions;
 
-  constructor(id: string, defaultMessage?: string, options?: ErrorOptions) {
+  constructor(id: string, defaultMessage?: ScopedValue<string>, options?: ErrorOptions) {
     const parts = id.split("/");
     if (parts.length !== 2) {
       console.error(`[sendable-error] Invalid error code '${id}' provided, must be of form 'prefix/descriptive-name'`);
