@@ -1,10 +1,10 @@
-import {v5 as uuid}                                     from "uuid";
-import ErrorCode                                        from "./ErrorCode";
-import {ErrorOptions, Response, Scope, ScopedValue}     from "./Types";
-import {CODE_MISC_INTERNAL_ERROR}                       from "./DefaultCodes";
-import {getErrorLogger}                                 from "./Logger";
-import {ErrorParserFunction}                            from "./Parser";
-import {SendableErrorBuilder, SendableErrorBuilderBase} from "./Builder";
+import {v5 as uuid}                                                             from "uuid";
+import ErrorCode                                                                from "./ErrorCode";
+import {ErrorOptions, ErrorResponseBody, ResponseWithError, Scope, ScopedValue} from "./Types";
+import {CODE_MISC_INTERNAL_ERROR}                                               from "./DefaultCodes";
+import {getErrorLogger}                                                         from "./Logger";
+import {ErrorParserFunction}                                                    from "./Parser";
+import {SendableErrorBuilder, SendableErrorBuilderBase}                         from "./Builder";
 
 export const DEFAULT_ERROR_OPTIONS: Required<ErrorOptions> = {
   statusCode : 500,
@@ -13,23 +13,23 @@ export const DEFAULT_ERROR_OPTIONS: Required<ErrorOptions> = {
 };
 
 
-export function getErrorName(error: Error): string {
+export const getErrorName = (error: Error): string => {
   if (error instanceof SendableError) {
     const code = error.getCode();
     return code.options.displayName || "Error";
   }
   return error.constructor.name;
-}
+};
 
 const scopeValues: Scope[] = ["private", "public"];
 
 /**
  * Transforms an error into a deterministic error identifier to enable easy log searching
  */
-export function getTraceId(error: Error): string {
+export const getTraceId = (error: Error): string => {
   const errorString = error.stack || error.toString();
   return uuid(errorString, uuid.URL);
-}
+};
 
 export const computedScopedValue = <T>(scope: Scope, values: Array<ScopedValue<T> | null | undefined>, defaultValue?: T): T | undefined => {
   for (const value of values) {
@@ -146,15 +146,29 @@ export default class SendableError extends Error implements SendableErrorBuilder
     };
   }
 
+  toResponse(): ErrorResponseBody {
+    const traceId = this._traceId;
+
+    return {
+      code   : this.getCode().id,
+      message: this.getMessage("public"),
+      traceId: traceId,
+      details: computedScopedValue("public", [this._details, DEFAULT_DETAILS]),
+    };
+  }
+
+  getTraceId(): string {
+    return this._traceId;
+  }
+
   /**
    * Sends the error (if a response wasn't already sent).
 
    * If the error severity is ERROR and the error hasn't been logged until send() is called
    * this function will log the error to make sure no severe errors are not logged.
    */
-  send(res: Response): this {
+  send(res: ResponseWithError): this {
     const {statusCode} = this.computedOptions;
-    const traceId      = this._traceId;
 
     // Make sure errors aren't swallowed
     if (!this._logged) {
@@ -164,12 +178,10 @@ export default class SendableError extends Error implements SendableErrorBuilder
     res.cause = this;
 
     if (!res.headersSent) {
-      res.status(statusCode).send({
-        code   : this.getCode().id,
-        message: this.getMessage("public"),
-        traceId: traceId,
-        details: computedScopedValue("public", [this._details, DEFAULT_DETAILS]),
-      });
+      if (typeof res.status === "function") {
+        res.status(statusCode);
+      }
+      res.send(this.toResponse());
     }
     return this;
   };

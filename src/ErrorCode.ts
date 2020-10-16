@@ -1,5 +1,6 @@
-import SendableError               from "./SendableError";
-import {ErrorOptions, ScopedValue} from "./Types";
+import SendableError, {isSendableError} from "./SendableError";
+import {ErrorOptions, ScopedValue}      from "./Types";
+import {CODE_MISC_INTERNAL_ERROR}       from "./DefaultCodes";
 
 export default class ErrorCode {
 
@@ -42,6 +43,10 @@ export default class ErrorCode {
       });
     }
     return code;
+  }
+
+  static get(error: Error): ErrorCode {
+    return isSendableError(error) ? error.getCode() : CODE_MISC_INTERNAL_ERROR;
   }
 
 }

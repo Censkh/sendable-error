@@ -1,7 +1,7 @@
 export type Severity = "debug" | "info" | "warn" | "error";
 
-export interface Response {
-  status(statusCode: number): this;
+export interface ResponseWithError {
+  status: ((statusCode: number) => this) | number;
 
   send(data: any): void;
 
@@ -24,3 +24,10 @@ export interface ErrorOptions {
 export type Scope = "private" | "public";
 
 export type ScopedValue<T> = T | Partial<Record<Scope, T>>;
+
+export interface ErrorResponseBody {
+  code: string,
+  message: string;
+  traceId: string;
+  details: any;
+}

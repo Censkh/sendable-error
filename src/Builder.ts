@@ -1,7 +1,7 @@
 import ErrorCode                   from "./ErrorCode";
 import {ErrorOptions, ScopedValue} from "./Types";
 import SendableError               from "./SendableError";
-import {getErrorParsers}            from "./Parser";
+import {getErrorParsers}           from "./Parser";
 
 const DEFAULT_DETAILS = {};
 
