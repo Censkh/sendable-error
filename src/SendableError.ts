@@ -5,6 +5,7 @@ import {CODE_MISC_INTERNAL_ERROR}                                               
 import {getErrorLogger}                                                         from "./Logger";
 import {ErrorParserFunction}                                                    from "./Parser";
 import {SendableErrorBuilder, SendableErrorBuilderBase}                         from "./Builder";
+import {computedScopedValue}                                                    from "./Utils";
 
 export const DEFAULT_ERROR_OPTIONS: Required<ErrorOptions> = {
   statusCode : 500,
@@ -21,7 +22,6 @@ export const getErrorName = (error: Error): string => {
   return error.constructor.name;
 };
 
-const scopeValues: Scope[] = ["private", "public"];
 
 /**
  * Transforms an error into a deterministic error identifier to enable easy log searching
@@ -31,25 +31,6 @@ export const getTraceId = (error: Error): string => {
   return uuid(errorString, uuid.URL);
 };
 
-export const computedScopedValue = <T>(scope: Scope, values: Array<ScopedValue<T> | null | undefined>, defaultValue?: T): T | undefined => {
-  for (const value of values) {
-    if (value !== null && value !== undefined) {
-      if (typeof value === "object") {
-        if (Object.keys(value).some(key => scopeValues.includes(key as any))) {
-          const scopedValue = (value as any)[scope];
-          if (scopedValue !== undefined) {
-            return scopedValue;
-          } else {
-            continue;
-          }
-        }
-      }
-      return value as T;
-    }
-  }
-
-  return defaultValue;
-};
 
 export const isSendableError = (error: Error): error is SendableError => {
   return error instanceof SendableError;
@@ -71,6 +52,10 @@ export default class SendableError extends Error implements SendableErrorBuilder
   private _details: ScopedValue<Object> = DEFAULT_DETAILS;
 
   private _logged = false;
+
+  public static is(error: Error): error is SendableError {
+    return isSendableError(error);
+  }
 
   public static of(codeOrError: ErrorCode | Error, parser?: ErrorParserFunction) {
     const builder = new SendableErrorBuilder();
@@ -197,19 +182,24 @@ export default class SendableError extends Error implements SendableErrorBuilder
     };
     const traceId         = this._traceId;
     const loggedMessage   = message || this.getMessage("private");
-    info                  = {
+
+    const providedInfo   = Object.assign({}, computedScopedValue("private", [this._details, DEFAULT_DETAILS]), info);
+    const errorInfo: any = {
       traceId        : traceId,
       code           : this.getCode().id,
-      originalMessage: this.message,
-      ...computedScopedValue("private", [this._details, DEFAULT_DETAILS]),
-      ...(info || {}),
     };
 
-    if (info.originalMessage === loggedMessage) {
-      delete info.originalMessage;
-    }
+    const computedInfo = Object.assign({}, errorInfo, providedInfo);
 
-    getErrorLogger()(computedOptions, source, loggedMessage, this, info);
+    getErrorLogger()({
+      options     : computedOptions,
+      source      : source,
+      message     : loggedMessage,
+      error       : this,
+      info        : computedInfo,
+      errorInfo   : errorInfo,
+      providedInfo: providedInfo,
+    });
 
     return this;
   };

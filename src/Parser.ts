@@ -1,6 +1,6 @@
 import {SendableErrorBuilder} from "./Builder";
 
-export type ErrorParserFunction = (error: Error, builder: SendableErrorBuilder) => SendableErrorBuilder;
+export type ErrorParserFunction = (error: Error, builder: SendableErrorBuilder) => void;
 
 export type ErrorParser = {
   id: string;

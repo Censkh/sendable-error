@@ -9,12 +9,6 @@ export interface ResponseWithError {
   headersSent: boolean;
 }
 
-declare global {
-  export interface Error {
-    originalStack?: string;
-  }
-}
-
 export interface ErrorOptions {
   statusCode?: number,
   severity?: Severity,
@@ -24,6 +18,7 @@ export interface ErrorOptions {
 export type Scope = "private" | "public";
 
 export type ScopedValue<T> = T | Partial<Record<Scope, T>>;
+export type FullyScopedValue<T> = T | Record<Scope, T>;
 
 export interface ErrorResponseBody {
   code: string,
