@@ -59,7 +59,7 @@ export class SendableErrorBuilder implements SendableErrorBuilderBase {
         result = error;
       } else {
         for (const parser of getErrorParsers()) {
-          parser.func(error, this);
+          parser.parse(error, this);
         }
 
         Object.setPrototypeOf(error, SendableError.prototype);

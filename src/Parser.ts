@@ -4,7 +4,7 @@ export type ErrorParserFunction = (error: Error, builder: SendableErrorBuilder) 
 
 export type ErrorParser = {
   id: string;
-  func: ErrorParserFunction;
+  parse: ErrorParserFunction;
 };
 
 const parsers: ErrorParser[] = [];
