@@ -22,7 +22,7 @@ export class SendableErrorBuilder implements SendableErrorBuilderBase {
   private _defaultCode!: ErrorCode;
   private _messages: ScopedValue<string> | null = null;
   private _options: ErrorOptions | null         = null;
-  private _details: ScopedValue<Object>         = DEFAULT_DETAILS;
+  private _details: ScopedValue<Object> | null         = null;
 
   code(code: ErrorCode): this {
     this._code = code;
@@ -62,7 +62,12 @@ export class SendableErrorBuilder implements SendableErrorBuilderBase {
           parser.parse(error, this);
         }
 
+        // if the message is a getter, grab it before we mess with the prototype
+        const message = error.message;
         Object.setPrototypeOf(error, SendableError.prototype);
+        Object.defineProperty(error, "message", {
+          value: message
+        })
         const sendable = error as SendableError;
         (sendable as any).init();
         result = sendable;

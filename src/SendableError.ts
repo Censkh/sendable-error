@@ -133,12 +133,14 @@ export default class SendableError extends Error implements SendableErrorBuilder
 
   toResponse(): ErrorResponseBody {
     const traceId = this._traceId;
+    
+    console.log(this._details);
 
     return {
       code   : this.getCode().id,
       message: this.getMessage("public"),
       traceId: traceId,
-      details: computedScopedValue("public", [this._details, DEFAULT_DETAILS]),
+      details: computedScopedValue("public", [this._details]),
     };
   }
 
