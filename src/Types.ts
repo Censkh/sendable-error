@@ -9,16 +9,11 @@ export interface ResponseWithError {
   headersSent: boolean;
 }
 
-export interface ErrorOptions {
+/*export interface ErrorOptions {
   statusCode?: number,
   severity?: Severity,
   displayName?: string,
-}
-
-export type Scope = "private" | "public";
-
-export type ScopedValue<T> = T | Partial<Record<Scope, T>>;
-export type FullyScopedValue<T> = T | Record<Scope, T>;
+}*/
 
 export interface ErrorResponseBody {
   code: string,

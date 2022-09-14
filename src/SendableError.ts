@@ -1,27 +1,15 @@
-import {v5 as uuid}                                                             from "uuid";
-import ErrorCode                                                                from "./ErrorCode";
-import {ErrorOptions, ErrorResponseBody, ResponseWithError, Scope, ScopedValue} from "./Types";
-import {CODE_MISC_INTERNAL_ERROR}                                               from "./DefaultCodes";
-import {getErrorLogger}                                                         from "./Logger";
-import {ErrorParserFunction}                                                    from "./Parser";
-import {SendableErrorBuilder, SendableErrorBuilderBase}                         from "./Builder";
-import {computedScopedValue}                                                    from "./Utils";
+import {v5 as uuid}                                         from "uuid";
+import ErrorCode                                            from "./ErrorCode";
+import {ErrorResponseBody, ResponseWithError} from "./Types";
+import {CODE_MISC_INTERNAL_ERROR}                           from "./DefaultCodes";
+import {getErrorLogger}                                     from "./Logger";
+import {SendableErrorBuilder}                               from "./Builder";
 
-export const DEFAULT_ERROR_OPTIONS: Required<ErrorOptions> = {
+/*export const DEFAULT_ERROR_OPTIONS: Required<ErrorOptions> = {
   statusCode : 500,
   severity   : "warn",
   displayName: "Error",
-};
-
-
-export const getErrorName = (error: Error): string => {
-  if (error instanceof SendableError) {
-    const code = error.getCode();
-    return code.options.displayName || "Error";
-  }
-  return error.constructor.name;
-};
-
+};*/
 
 /**
  * Transforms an error into a deterministic error identifier to enable easy log searching
@@ -36,135 +24,120 @@ export const isSendableError = (error: Error): error is SendableError => {
   return error instanceof SendableError;
 };
 
-const DEFAULT_DETAILS = {};
+const DEFAULT_PROPERTIES: SendableErrorProperties = {
+  code: CODE_MISC_INTERNAL_ERROR,
+};
+
+export type SendableErrorDetails = Record<string, any>;
+
+export interface SendableErrorProperties<D extends SendableErrorDetails = {}> {
+  code: ErrorCode,
+  message?: string,
+  //options?: ErrorOptions,
+  details?: SendableErrorDetails,
+  reason?: Error
+}
+
+export interface SendableErrorState {
+  logged: boolean,
+  traceId: string,
+}
 
 /**
  * An error with a known cause that is sendable
  */
-export default class SendableError extends Error implements SendableErrorBuilderBase {
+export default class SendableError<D extends SendableErrorDetails = {}> extends Error {
 
-  private _code: ErrorCode | null               = null;
-  private _defaultCode!: ErrorCode;
-  private _messages: ScopedValue<string> | null = null;
-  private _traceId!: string;
-
-  private _options: ErrorOptions | null = null;
-  private _details: ScopedValue<Object> = DEFAULT_DETAILS;
-
-  private _logged = false;
+  private __properties!: SendableErrorProperties<D>;
+  private __state!: SendableErrorState;
 
   public static is(error: Error): error is SendableError {
     return isSendableError(error);
   }
 
-  public static of(codeOrError: ErrorCode | Error, parser?: ErrorParserFunction) {
-    const builder = new SendableErrorBuilder();
+  public static of<D extends SendableErrorDetails>(codeOrError: ErrorCode<D> | Error): SendableErrorBuilder<D> {
+    return new SendableErrorBuilder(codeOrError);
+  }
 
-    if (parser) {
-      if (codeOrError instanceof Error && !isSendableError(codeOrError)) {
-        parser(codeOrError, builder);
-      }
+  private constructor(properties?: SendableErrorProperties<D>) {
+    super("__");
+
+    this.init(properties);
+  }
+
+  private overrideProperty(name: string, getter: () => any) {
+
+    Object.defineProperty(this, name, {
+      value: getter(),
+      get: getter.bind(this),
+    });
+
+  }
+
+  private init(properties?: Partial<SendableErrorProperties<D>>) {
+    if (!this.__properties) {
+      this.__properties = {...DEFAULT_PROPERTIES, ...properties};
+    } else {
+      Object.assign(this.__properties, properties);
     }
 
-    return builder.build(codeOrError);
+    this.__state      = {
+      logged : false,
+      traceId: getTraceId(this),
+    };
+
+    this.overrideProperty("code", this.getCode);
+    this.overrideProperty("message", this.getMessage);
+    this.overrideProperty("reason", this.getReason);
   }
 
-  private constructor(message: string, code?: ErrorCode) {
-    super(message);
-
-    this.init();
-    this._code = code || null;
-  }
-
-  private init() {
-    this._code        = null;
-    this._logged      = false;
-    this._defaultCode = CODE_MISC_INTERNAL_ERROR;
-    this._traceId     = getTraceId(this);
-
-    Object.defineProperty(this, "code", {
-      value: SendableError.prototype.code,
-    });
+  getReason(): Error | undefined {
+    return this.__properties.reason;
   }
 
   getCode(): ErrorCode {
-    return this._code || this._defaultCode;
+    return this.__properties.code;
   };
 
-  getMessage(scope: Scope): string {
-    return computedScopedValue<string>(scope, [this._messages, this.getCode().defaultMessage, {
-      public : CODE_MISC_INTERNAL_ERROR.defaultMessage as string,
-      private: this.message,
-    }])!;
-  };
-
-  details(details: ScopedValue<Object>): this {
-    this._details = details;
-    return this;
-  };
-
-  code(code: ErrorCode): this {
-    this._code = code;
-    return this;
-  };
-
-  options(options: ErrorOptions): this {
-    this._options = options;
-    return this;
+  getMessage(): string {
+    return this.__properties.message || this.getCode().defaultMessage;
   }
 
-  defaultCode(defaultCode: ErrorCode): this {
-    this._defaultCode = defaultCode;
-    return this;
-  };
-
-  messages(messages: ScopedValue<string>): this {
-    this._messages = messages;
-    return this;
-  };
-
-  get computedOptions(): Required<ErrorOptions> {
+  /*get computedOptions(): Required<ErrorOptions> {
     return {
       ...DEFAULT_ERROR_OPTIONS,
       ...this.getCode().options,
-      ...this._options,
+      ...this.__properties.options,
     };
-  }
+  }*/
 
   toResponse(): ErrorResponseBody {
-    const traceId = this._traceId;
-
     return {
       code   : this.getCode().id,
-      message: this.getMessage("public"),
-      traceId: traceId,
-      details: computedScopedValue("public", [this._details]),
+      message: this.getMessage(),
+      traceId: this.__state.traceId,
+      details: this.__properties.details || {},
     };
   }
 
   getTraceId(): string {
-    return this._traceId;
+    return this.__state.traceId;
   }
 
   /**
-   * Sends the error (if a response wasn't already sent).
-
-   * If the error severity is ERROR and the error hasn't been logged until send() is called
-   * this function will log the error to make sure no severe errors are not logged.
+   * Sends the error (if a response wasn't already sent) & logs if it wasn't already logged
    */
   send(res: ResponseWithError): this {
-    const {statusCode} = this.computedOptions;
-
     // Make sure errors aren't swallowed
-    if (!this._logged) {
-      this.log("ErrorUtils::send");
+    if (!this.__state.logged) {
+      this.log("SendableError");
     }
 
     res.cause = this;
 
     if (!res.headersSent) {
       if (typeof res.status === "function") {
-        res.status(statusCode);
+        res.status(500);
       }
       res.send(this.toResponse());
     }
@@ -174,25 +147,25 @@ export default class SendableError extends Error implements SendableErrorBuilder
   /**
    * Log out info on error
    */
-  log(source: string, message?: string, info?: any, options?: ErrorOptions) {
-    this._logged          = true;
-    const computedOptions = {
+  log(source: string, message?: string, info?: any) {
+    this.__state.logged   = true;
+    /**const computedOptions = {
       ...this.computedOptions,
       ...(options || {}),
-    };
-    const traceId         = this._traceId;
-    const loggedMessage   = message || this.getMessage("private");
+    };**/
+    const traceId         = this.getTraceId();
+    const loggedMessage   = message || this.getMessage();
 
-    const providedInfo   = Object.assign({}, computedScopedValue("private", [this._details, DEFAULT_DETAILS]), info);
+    const providedInfo   = Object.assign({}, this.__properties.details, info);
     const errorInfo: any = {
-      traceId        : traceId,
-      code           : this.getCode().id,
+      traceId: traceId,
+      code   : this.getCode().id,
     };
 
     const computedInfo = Object.assign({}, errorInfo, providedInfo);
 
     getErrorLogger()({
-      options     : computedOptions,
+     //options     : computedOptions,
       source      : source,
       message     : loggedMessage,
       error       : this,

@@ -1,59 +1,45 @@
-import ErrorCode                   from "./ErrorCode";
-import {ErrorOptions, ScopedValue} from "./Types";
-import SendableError               from "./SendableError";
-import {getErrorParsers}           from "./Parser";
+import ErrorCode         from "./ErrorCode";
+//import {ErrorOptions}                                                 from "./Types";
+import SendableError, {SendableErrorDetails, SendableErrorProperties} from "./SendableError";
+import {getErrorParsers}                                              from "./Parser";
 
-const DEFAULT_DETAILS = {};
+export class SendableErrorBuilder<D extends SendableErrorDetails = {}> {
+  private baseError: Error | undefined;
+  private properties: Partial<SendableErrorProperties<D>> = {};
 
-export interface SendableErrorBuilderBase {
-  details(details: ScopedValue<Object>): this;
+  constructor(codeOrError: ErrorCode<D> | Error) {
+    if (codeOrError instanceof Error) {
+      this.baseError = codeOrError;
+    } else {
+      this.properties.code = codeOrError;
+    }
+  }
 
-  code(code: ErrorCode): this;
+  code<N extends SendableErrorDetails>(code: ErrorCode<N>): SendableErrorBuilder<N> {
+    this.properties.code = code;
+    return this as any;
+  }
 
-  options(options: ErrorOptions): this;
-
-  defaultCode(defaultCode: ErrorCode): this;
-
-  messages(messages: ScopedValue<string>): this;
-}
-
-export class SendableErrorBuilder implements SendableErrorBuilderBase {
-  private _code: ErrorCode | null               = null;
-  private _defaultCode!: ErrorCode;
-  private _messages: ScopedValue<string> | null = null;
-  private _options: ErrorOptions | null         = null;
-  private _details: ScopedValue<Object> | null         = null;
-
-  code(code: ErrorCode): this {
-    this._code = code;
+  details(details: D): this {
+    this.properties.details = details;
     return this;
   }
 
-  defaultCode(defaultCode: ErrorCode): this {
-    this._defaultCode = defaultCode;
+  reason(reason: Error | undefined): this {
+    this.properties.reason = reason;
     return this;
   }
 
-  details(details: ScopedValue<Object>): this {
-    this._details = details;
+  message(message: string): this {
+    this.properties.message = message;
     return this;
   }
 
-  messages(messages: ScopedValue<string>): this {
-    this._messages = messages;
-    return this;
-  }
-
-  options(options: ErrorOptions): this {
-    this._options = options;
-    return this;
-  }
-
-  build(codeOrError: ErrorCode | Error): SendableError {
+  build(): SendableError<D> {
     let result: SendableError;
 
-    if (codeOrError instanceof Error) {
-      const error = codeOrError as Error;
+    if (this.baseError) {
+      const error = this.baseError;
 
       if (error instanceof SendableError) {
         result = error;
@@ -63,38 +49,13 @@ export class SendableErrorBuilder implements SendableErrorBuilderBase {
         }
 
         // if the message is a getter, grab it before we mess with the prototype
-        const message = error.message;
         Object.setPrototypeOf(error, SendableError.prototype);
-        Object.defineProperty(error, "message", {
-          value: message
-        })
         const sendable = error as SendableError;
-        (sendable as any).init();
+        (sendable as any).init(this.properties);
         result = sendable;
       }
     } else {
-      const code = codeOrError;
-      result     = new (SendableError as any)(code.defaultMessage, code);
-    }
-
-    if (this._code) {
-      result.code(this._code);
-    }
-
-    if (this._defaultCode) {
-      result.defaultCode(this._defaultCode);
-    }
-
-    if (this._options) {
-      result.options(this._options);
-    }
-
-    if (this._messages) {
-      result.messages(this._messages);
-    }
-
-    if (this._details) {
-      result.details(this._details);
+      result     = new (SendableError as any)(this.properties);
     }
 
     return result;

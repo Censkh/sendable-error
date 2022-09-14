@@ -26,10 +26,11 @@ const CODE_MISSING_REQUIRED = new ErrorCode("validation/missing-required", "Miss
 export const updateUser = (req, res) => {
     if (!req.body.id) {
         return SendableError.of(CODE_MISSING_REQUIRED)
-            .messages("Missing required field 'id'")
+            .message("Missing required field 'id'")
             .details({
                 field: "id"
             })
+            .build()
             .send(res);
     }
 };
