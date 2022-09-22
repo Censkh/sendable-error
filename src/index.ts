@@ -1,9 +1,8 @@
 //export * from "./Types";
 export * from "./DefaultCodes";
-export * from "./Logger";
-//export * from "./Parser";
+export * from "./Logging";
 
-export {default as ErrorCode, ErrorCodeOptions} from "./ErrorCode";
+export {default as ErrorCode, ErrorCodeProperties} from "./ErrorCode";
 
 import {default as SendableError, getTraceId, isSendableError} from "./SendableError";
 

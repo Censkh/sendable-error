@@ -1,9 +1,8 @@
-import {v5 as uuid}                                         from "uuid";
-import ErrorCode                                            from "./ErrorCode";
+import {v5 as uuid}                           from "uuid";
+import ErrorCode                              from "./ErrorCode";
 import {ErrorResponseBody, ResponseWithError} from "./Types";
-import {CODE_MISC_INTERNAL_ERROR}                           from "./DefaultCodes";
-import {getErrorLogger}                                     from "./Logger";
-import {SendableErrorBuilder}                               from "./Builder";
+import {ERROR_CODE_MISC_INTERNAL_ERROR}       from "./DefaultCodes";
+import {getErrorLogger}                       from "./Logging";
 
 /*export const DEFAULT_ERROR_OPTIONS: Required<ErrorOptions> = {
   statusCode : 500,
@@ -24,8 +23,8 @@ export const isSendableError = (error: Error): error is SendableError => {
   return error instanceof SendableError;
 };
 
-const DEFAULT_PROPERTIES: SendableErrorProperties = {
-  code: CODE_MISC_INTERNAL_ERROR,
+const DEFAULT_PROPERTIES: SendableErrorProperties<any> = {
+  code: ERROR_CODE_MISC_INTERNAL_ERROR,
 };
 
 export type SendableErrorDetails = Record<string, any>;
@@ -34,8 +33,8 @@ export interface SendableErrorProperties<D extends SendableErrorDetails = {}> {
   code: ErrorCode,
   message?: string,
   //options?: ErrorOptions,
-  details?: SendableErrorDetails,
-  reason?: Error
+  details?: D & Record<string, any>,
+  cause?: Error
 }
 
 export interface SendableErrorState {
@@ -48,59 +47,68 @@ export interface SendableErrorState {
  */
 export default class SendableError<D extends SendableErrorDetails = {}> extends Error {
 
-  private __properties!: SendableErrorProperties<D>;
-  private __state!: SendableErrorState;
+  private properties!: SendableErrorProperties<D>;
+  private state!: SendableErrorState;
 
   public static is(error: Error): error is SendableError {
     return isSendableError(error);
   }
 
-  public static of<D extends SendableErrorDetails>(codeOrError: ErrorCode<D> | Error): SendableErrorBuilder<D> {
-    return new SendableErrorBuilder(codeOrError);
+  public static of<D extends SendableErrorDetails>(error: Error, properties?: Partial<SendableErrorProperties<D>>): SendableError<D> {
+    let result: SendableError<D>;
+
+    if (error instanceof SendableError) {
+      result = error;
+    } else {
+      Object.setPrototypeOf(error, SendableError.prototype);
+      result = error as SendableError<D>;
+    }
+
+    result.init(properties);
+
+    return result;
   }
 
-  private constructor(properties?: SendableErrorProperties<D>) {
+  constructor(properties?: SendableErrorProperties<D>) {
     super("__");
 
     this.init(properties);
   }
 
   private overrideProperty(name: string, getter: () => any) {
-
+    const boundGetter = getter.bind(this);
     Object.defineProperty(this, name, {
-      value: getter(),
-      get: getter.bind(this),
+      value: boundGetter(),
     });
-
   }
 
   private init(properties?: Partial<SendableErrorProperties<D>>) {
-    if (!this.__properties) {
-      this.__properties = {...DEFAULT_PROPERTIES, ...properties};
+    if (!this.properties) {
+      this.properties = {...DEFAULT_PROPERTIES, ...properties};
     } else {
-      Object.assign(this.__properties, properties);
+      Object.assign(this.properties, properties);
     }
 
-    this.__state      = {
+    this.state = {
       logged : false,
       traceId: getTraceId(this),
     };
 
     this.overrideProperty("code", this.getCode);
     this.overrideProperty("message", this.getMessage);
-    this.overrideProperty("reason", this.getReason);
+    this.overrideProperty("cause", this.getCause);
   }
 
-  getReason(): Error | undefined {
-    return this.__properties.reason;
+  getCause(): Error | undefined {
+    return this.properties.cause;
   }
 
   getCode(): ErrorCode {
-    return this.__properties.code;
+    return this.properties.code || ERROR_CODE_MISC_INTERNAL_ERROR;
   };
 
   getMessage(): string {
-    return this.__properties.message || this.getCode().defaultMessage;
+    return this.properties.message || this.getCode().getDefaultMessage() ||  "An unknown error occurred";
   }
 
   /*get computedOptions(): Required<ErrorOptions> {
@@ -113,15 +121,15 @@ export default class SendableError<D extends SendableErrorDetails = {}> extends 
 
   toResponse(): ErrorResponseBody {
     return {
-      code   : this.getCode().id,
+      code   : this.getCode().getId(),
       message: this.getMessage(),
-      traceId: this.__state.traceId,
-      details: this.__properties.details || {},
+      traceId: this.state.traceId,
+      details: this.properties.details || {},
     };
   }
 
   getTraceId(): string {
-    return this.__state.traceId;
+    return this.state.traceId;
   }
 
   /**
@@ -129,7 +137,7 @@ export default class SendableError<D extends SendableErrorDetails = {}> extends 
    */
   send(res: ResponseWithError): this {
     // Make sure errors aren't swallowed
-    if (!this.__state.logged) {
+    if (!this.state.logged) {
       this.log("SendableError");
     }
 
@@ -148,24 +156,24 @@ export default class SendableError<D extends SendableErrorDetails = {}> extends 
    * Log out info on error
    */
   log(source: string, message?: string, info?: any) {
-    this.__state.logged   = true;
+    this.state.logged = true;
     /**const computedOptions = {
       ...this.computedOptions,
       ...(options || {}),
     };**/
-    const traceId         = this.getTraceId();
-    const loggedMessage   = message || this.getMessage();
+    const traceId       = this.getTraceId();
+    const loggedMessage = message || this.getMessage();
 
-    const providedInfo   = Object.assign({}, this.__properties.details, info);
+    const providedInfo   = Object.assign({}, this.properties.details, info);
     const errorInfo: any = {
       traceId: traceId,
-      code   : this.getCode().id,
+      code   : this.getCode().getId(),
     };
 
     const computedInfo = Object.assign({}, errorInfo, providedInfo);
 
     getErrorLogger()({
-     //options     : computedOptions,
+      //options     : computedOptions,
       source      : source,
       message     : loggedMessage,
       error       : this,

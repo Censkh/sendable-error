@@ -1,27 +1,31 @@
 import SendableError, {isSendableError, SendableErrorDetails} from "./SendableError";
 //import {ErrorOptions}                   from "./Types";
-import {CODE_MISC_INTERNAL_ERROR}       from "./DefaultCodes";
+import {ERROR_CODE_MISC_INTERNAL_ERROR} from "./DefaultCodes";
 
-export interface ErrorCodeOptions {
-
+export interface ErrorCodeProperties {
+  id: string,
+  defaultMessage: string,
 }
 
 export default class ErrorCode<D extends SendableErrorDetails = {}> {
 
   readonly prefix: string;
-  readonly id: string;
-  readonly defaultMessage: string;
   //readonly options: ErrorOptions;
 
-  constructor(id: string, defaultMessage?: string, /*options?: ErrorOptions*/) {
-    const parts = id.split("/");
+  constructor(private readonly properties: ErrorCodeProperties, /*options?: ErrorOptions*/) {
+    const parts = properties.id.split("/");
     if (parts.length !== 2) {
-      console.error(`[sendable-error] Invalid error code '${id}' provided, must be of form 'prefix/descriptive-name'`);
+      console.error(`[sendable-error] Invalid error code '${properties.id}' provided, must be of form 'prefix/descriptive-name'`);
     }
-    this.prefix         = id.split("/")[0];
-    this.id             = id;
-    this.defaultMessage = defaultMessage || "An unknown error occurred";
-    //this.options        = options || {};
+    this.prefix         = properties.id.split("/")[0];
+  }
+
+  getDefaultMessage(): string | undefined {
+    return this.properties.defaultMessage;
+  }
+
+  getId(): string {
+    return this.properties.id;
   }
 
   /**
@@ -29,7 +33,7 @@ export default class ErrorCode<D extends SendableErrorDetails = {}> {
    */
   is(error: any): error is SendableError {
     if (isSendableError(error)) {
-      return error.getCode().id === this.id;
+      return error.getCode().getId() === this.getId();
     }
 
     return false;
@@ -38,12 +42,12 @@ export default class ErrorCode<D extends SendableErrorDetails = {}> {
   /**
    * Extends an existing error code
    */
-  private extend(id: string, defaultMessage = undefined, options = {}) {
+  private extend(properties: ErrorCodeProperties) {
     /*const mixedOptions = {
       ...this.options,
       ...options,
     };*/
-    const code         = new ErrorCode(id, defaultMessage || this.defaultMessage, /*mixedOptions*/);
+    const code         = new ErrorCode(properties, /*mixedOptions*/);
     if (code.prefix !== this.prefix) {
       console.error("[sendable-error] Extension doesn't share same prefix, this doesn't seem right", {
         originalPrefix: this.prefix,
@@ -54,7 +58,7 @@ export default class ErrorCode<D extends SendableErrorDetails = {}> {
   }
 
   static get(error: Error): ErrorCode {
-    return isSendableError(error) ? error.getCode() : CODE_MISC_INTERNAL_ERROR;
+    return isSendableError(error) ? error.getCode() : ERROR_CODE_MISC_INTERNAL_ERROR;
   }
 
 }

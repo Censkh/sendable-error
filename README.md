@@ -21,17 +21,18 @@ Creating a new error from scratch:
 ```js
 import {SendableError, ErrorCode} from "sendable-error";
 
-const CODE_MISSING_REQUIRED = new ErrorCode("validation/missing-required", "Missing required field", {statusCode: 400});
+const CODE_MISSING_REQUIRED = new ErrorCode({id: "validation/missing-required", defaultMessage: "Missing required field");
 
 export const updateUser = (req, res) => {
     if (!req.body.id) {
-        return SendableError.of(CODE_MISSING_REQUIRED)
-            .message("Missing required field 'id'")
-            .details({
-                field: "id"
-            })
-            .build()
-            .send(res);
+        return new SendableError({
+          code: CODE_MISSING_REQUIRED,
+          message: "Missing required field 'id'",
+          details: {
+            field: "id"
+          }
+        })
+          .send(res);
     }
 };
 ```
