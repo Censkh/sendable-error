@@ -1,11 +1,12 @@
 {
   "name": "sendable-error",
-  "version": "0.1.0-alpha13",
+  "version": "0.1.0-alpha14",
   "main": "cjs/index.js",
   "types": "esm/index.d.ts",
   "module": "esm/index.js",
   "sideEffects": false,
   "scripts": {
+    "test": "ava",
     "example:start": "cd example && npm run start",
     "example:dev": "cd example && npm run dev",
     "lint": "eslint --ext .tsx,.ts src",
@@ -24,13 +25,12 @@
     "@types/uuid": "^8.3.0",
     "@typescript-eslint/eslint-plugin": "^4.4.1",
     "@typescript-eslint/parser": "^4.4.1",
+    "ava": "^4.3.3",
+    "esbuild-node-loader": "^0.8.0",
     "eslint": "^7.11.0",
     "npm-run-all": "^4.1.5",
     "rimraf": "^3.0.2",
     "typescript": "^4.8.3"
-  },
-  "dependencies": {
-    "uuid": "^8.3.1"
   },
   "files": [
     "LICENSE",
@@ -38,6 +38,14 @@
     "esm/",
     "cjs/"
   ],
+  "ava": {
+    "extensions": {
+      "ts": "module"
+    },
+    "nodeArguments": [
+      "--experimental-loader=esbuild-node-loader"
+    ]
+  },
   "author": "James Waterhouse <09jwater@gmail.com>",
   "license": "MIT",
   "repository": "https://github.com/Censkh/sendable-error",
