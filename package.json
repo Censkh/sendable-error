@@ -1,12 +1,13 @@
 {
   "name": "sendable-error",
-  "version": "0.1.0-alpha14",
+  "version": "0.1.0-alpha15",
   "main": "cjs/index.js",
   "types": "esm/index.d.ts",
   "module": "esm/index.js",
   "sideEffects": false,
   "scripts": {
     "test": "ava",
+    "prepublishOnly": "npm run test && npm run build",
     "example:start": "cd example && npm run start",
     "example:dev": "cd example && npm run dev",
     "lint": "eslint --ext .tsx,.ts src",
