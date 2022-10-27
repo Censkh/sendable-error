@@ -2,7 +2,7 @@ import ErrorCode                              from "./ErrorCode";
 import {ErrorResponseBody, ResponseWithError} from "./Types";
 import {ERROR_CODE_MISC_INTERNAL_ERROR}       from "./DefaultCodes";
 import {getErrorLogger}                       from "./Logging";
-import crypto from "crypto";
+import crypto                                 from "crypto";
 
 /*export const DEFAULT_ERROR_OPTIONS: Required<ErrorOptions> = {
   statusCode : 500,
@@ -19,7 +19,7 @@ for (let i = 0; i < 256; ++i) {
 function stringify(arr: any, offset = 0) {
   // Note: Be careful editing this code!  It's been tuned for performance
   // and works in ways you may not expect. See https://github.com/uuidjs/uuid/pull/434
-  const uuid = (byteToHex[arr[offset + 0]] + byteToHex[arr[offset + 1]] + byteToHex[arr[offset + 2]] + byteToHex[arr[offset + 3]] + '-' + byteToHex[arr[offset + 4]] + byteToHex[arr[offset + 5]] + '-' + byteToHex[arr[offset + 6]] + byteToHex[arr[offset + 7]] + '-' + byteToHex[arr[offset + 8]] + byteToHex[arr[offset + 9]] + '-' + byteToHex[arr[offset + 10]] + byteToHex[arr[offset + 11]] + byteToHex[arr[offset + 12]] + byteToHex[arr[offset + 13]] + byteToHex[arr[offset + 14]] + byteToHex[arr[offset + 15]]).toLowerCase(); // Consistency check for valid UUID.  If this throws, it's likely due to one
+  const uuid = (byteToHex[arr[offset + 0]] + byteToHex[arr[offset + 1]] + byteToHex[arr[offset + 2]] + byteToHex[arr[offset + 3]] + "-" + byteToHex[arr[offset + 4]] + byteToHex[arr[offset + 5]] + "-" + byteToHex[arr[offset + 6]] + byteToHex[arr[offset + 7]] + "-" + byteToHex[arr[offset + 8]] + byteToHex[arr[offset + 9]] + "-" + byteToHex[arr[offset + 10]] + byteToHex[arr[offset + 11]] + byteToHex[arr[offset + 12]] + byteToHex[arr[offset + 13]] + byteToHex[arr[offset + 14]] + byteToHex[arr[offset + 15]]).toLowerCase(); // Consistency check for valid UUID.  If this throws, it's likely due to one
   // of the following:
   // - One or more input array values don't map to a hex octet (leading to
   // "undefined" in the uuid)
@@ -49,7 +49,7 @@ const DEFAULT_PROPERTIES: SendableErrorProperties<any> = {
 export type SendableErrorDetails = Record<string, any>;
 
 export interface SendableErrorProperties<D extends SendableErrorDetails = {}> {
-  code: ErrorCode,
+  code?: ErrorCode,
   message?: string,
   //options?: ErrorOptions,
   details?: D & Record<string, any>,
@@ -131,10 +131,10 @@ export default class SendableError<D extends SendableErrorDetails = {}> extends 
 
   getCode(): ErrorCode {
     return this.properties.code || ERROR_CODE_MISC_INTERNAL_ERROR;
-  };
+  }
 
   getMessage(): string {
-    return this.properties.message || this.getCode().getDefaultMessage() ||  "An unknown error occurred";
+    return this.properties.message || this.getCode().getDefaultMessage() || "An unknown error occurred";
   }
 
   /*get computedOptions(): Required<ErrorOptions> {
@@ -176,13 +176,13 @@ export default class SendableError<D extends SendableErrorDetails = {}> extends 
       res.send(this.toResponse());
     }
     return this;
-  };
+  }
 
   /**
    * Log out info on error
    */
   log(source: string, message?: string, info?: any) {
-    this.state.logged = true;
+    this.state.logged   = true;
     /**const computedOptions = {
       ...this.computedOptions,
       ...(options || {}),
@@ -209,7 +209,7 @@ export default class SendableError<D extends SendableErrorDetails = {}> extends 
     });
 
     return this;
-  };
+  }
 
 }
 

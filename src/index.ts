@@ -11,5 +11,5 @@ export default SendableError;
 export {
   SendableError,
   getTraceId,
-  isSendableError
+  isSendableError,
 };

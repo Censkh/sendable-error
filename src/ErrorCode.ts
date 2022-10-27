@@ -1,6 +1,6 @@
 import SendableError, {isSendableError, SendableErrorDetails} from "./SendableError";
 //import {ErrorOptions}                   from "./Types";
-import {ERROR_CODE_MISC_INTERNAL_ERROR} from "./DefaultCodes";
+import {ERROR_CODE_MISC_INTERNAL_ERROR}                       from "./DefaultCodes";
 
 export interface ErrorCodeProperties {
   id: string,
@@ -10,14 +10,15 @@ export interface ErrorCodeProperties {
 export default class ErrorCode<D extends SendableErrorDetails = {}> {
 
   readonly prefix: string;
+
   //readonly options: ErrorOptions;
 
-  constructor(private readonly properties: ErrorCodeProperties, /*options?: ErrorOptions*/) {
+  constructor(private readonly properties: ErrorCodeProperties /*options?: ErrorOptions*/) {
     const parts = properties.id.split("/");
     if (parts.length !== 2) {
       console.error(`[sendable-error] Invalid error code '${properties.id}' provided, must be of form 'prefix/descriptive-name'`);
     }
-    this.prefix         = properties.id.split("/")[0];
+    this.prefix = properties.id.split("/")[0];
   }
 
   getDefaultMessage(): string | undefined {
@@ -47,7 +48,7 @@ export default class ErrorCode<D extends SendableErrorDetails = {}> {
       ...this.options,
       ...options,
     };*/
-    const code         = new ErrorCode(properties, /*mixedOptions*/);
+    const code = new ErrorCode(properties /*mixedOptions*/);
     if (code.prefix !== this.prefix) {
       console.error("[sendable-error] Extension doesn't share same prefix, this doesn't seem right", {
         originalPrefix: this.prefix,

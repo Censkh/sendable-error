@@ -1,4 +1,4 @@
-import SendableError  from "./SendableError";
+import SendableError from "./SendableError";
 
 export type ErrorLogger = (options: ErrorLoggerOptions) => void;
 
@@ -13,7 +13,7 @@ export interface ErrorLoggerOptions {
 }
 
 export const defaultErrorLogger: ErrorLogger = ({source, message, error, info}) => {
-    console.error(source || `SendableError`, message, info, error.stack);
+  console.error(source || `SendableError`, message, info, error.stack);
 };
 
 let currentLogger = defaultErrorLogger;
