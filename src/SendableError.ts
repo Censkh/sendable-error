@@ -154,6 +154,10 @@ export default class SendableError<D extends SendableErrorDetails = {}> extends 
     };
   }
 
+  getDetails(): SendableErrorDetails | undefined {
+    return this.properties.details;
+  }
+
   getTraceId(): string {
     return this.state.traceId;
   }
