@@ -51,7 +51,7 @@ export type SendableErrorDetails = Record<string, any>;
 export interface SendableErrorProperties<D extends SendableErrorDetails = {}> {
   code?: ErrorCode,
   message?: string,
-  //options?: ErrorOptions,
+  publicMessage?: string,
   details?: D & Record<string, any>,
   cause?: Error
 }
@@ -82,7 +82,13 @@ export default class SendableError<D extends SendableErrorDetails = {}> extends 
       result = error;
     } else {
       Object.setPrototypeOf(error, SendableError.prototype);
-      result = error as SendableError<D>;
+      result     = error as SendableError<D>;
+      properties = {
+        ...properties,
+        code         : ERROR_CODE_MISC_INTERNAL_ERROR,
+        message      : error.message,
+        publicMessage: ERROR_CODE_MISC_INTERNAL_ERROR.getDefaultMessage(),
+      };
     }
 
     result.init(properties);
@@ -137,6 +143,10 @@ export default class SendableError<D extends SendableErrorDetails = {}> extends 
     return this.properties.message || this.getCode().getDefaultMessage() || "An unknown error occurred";
   }
 
+  getPublicMessage(): string {
+    return this.properties.publicMessage || this.getMessage();
+  }
+
   /*get computedOptions(): Required<ErrorOptions> {
     return {
       ...DEFAULT_ERROR_OPTIONS,
@@ -148,7 +158,7 @@ export default class SendableError<D extends SendableErrorDetails = {}> extends 
   toResponse(): ErrorResponseBody {
     return {
       code   : this.getCode().getId(),
-      message: this.getMessage(),
+      message: this.getPublicMessage(),
       traceId: this.state.traceId,
       details: this.properties.details || {},
     };

@@ -1,13 +1,12 @@
 import test                             from "ava";
 import SendableError, {isSendableError} from "../SendableError";
 import ErrorCode                        from "../ErrorCode";
-import {ERROR_CODE_MISC_INTERNAL_ERROR} from "../DefaultCodes";
 
 test("getting codes works", (t) => {
   const code = new ErrorCode({
-    id: "test/error-code",
-    defaultMessage: "Test error code"
-  })
+    id            : "test/error-code",
+    defaultMessage: "Test error code",
+  });
 
   const root = new SendableError({
     message: "A bug",
@@ -19,5 +18,18 @@ test("getting codes works", (t) => {
   } catch (error: any) {
     t.is(ErrorCode.get(error), code);
     t.is(isSendableError(error), true);
+  }
+
+  {
+    const error    = new Error("A bug");
+    const sendable = SendableError.of(error);
+    t.is(sendable.getMessage(), "A bug");
+    t.is(sendable.getPublicMessage(), "An internal error occurred");
+    t.deepEqual(sendable.toResponse(), {
+      code   : "misc/internal-error",
+      details: {},
+      message: "An internal error occurred",
+      traceId: sendable.getTraceId(),
+    });
   }
 });
