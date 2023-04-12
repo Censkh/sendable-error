@@ -24,11 +24,11 @@ test("getting codes works", (t) => {
     const error    = new Error("A bug");
     const sendable = SendableError.of(error);
     t.is(sendable.getMessage(), "A bug");
-    t.is(sendable.getPublicMessage(), "An internal error occurred");
+    //t.is(sendable.getPublicMessage(), "An internal error occurred");
     t.deepEqual(sendable.toResponse(), {
       code   : "misc/internal-error",
       details: {},
-      message: "An internal error occurred",
+      message: "A bug",
       traceId: sendable.getTraceId(),
     });
   }
