@@ -84,10 +84,10 @@ export default class SendableError<D extends SendableErrorDetails = {}> extends 
       Object.setPrototypeOf(error, SendableError.prototype);
       result     = error as SendableError<D>;
       properties = {
-        ...properties,
         code         : ERROR_CODE_MISC_INTERNAL_ERROR,
         message      : error.message,
         publicMessage: ERROR_CODE_MISC_INTERNAL_ERROR.getDefaultMessage(),
+        ...properties,
       };
     }
 
