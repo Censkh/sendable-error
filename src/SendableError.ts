@@ -51,7 +51,7 @@ export type SendableErrorDetails = Record<string, any>;
 export interface SendableErrorProperties<D extends SendableErrorDetails = {}> {
   code?: ErrorCode,
   message?: string,
-  publicMessage?: string,
+  public?: boolean,
   details?: D & Record<string, any>,
   cause?: Error
 }
@@ -80,13 +80,20 @@ export default class SendableError<D extends SendableErrorDetails = {}> extends 
 
     if (error instanceof SendableError) {
       result = error;
+      if (properties?.code && !properties?.message) {
+        properties = {
+          message: properties?.code?.getDefaultMessage(),
+          ...properties,
+        };
+      }
+
+
     } else {
       Object.setPrototypeOf(error, SendableError.prototype);
       result     = error as SendableError<D>;
       properties = {
         code         : ERROR_CODE_MISC_INTERNAL_ERROR,
         message      : error.message,
-        publicMessage: undefined,
         ...properties,
       };
     }
@@ -106,6 +113,7 @@ export default class SendableError<D extends SendableErrorDetails = {}> extends 
     const boundGetter = getter.bind(this);
     Object.defineProperty(this, name, {
       value: boundGetter(),
+      configurable: true,
     });
   }
 
@@ -143,8 +151,8 @@ export default class SendableError<D extends SendableErrorDetails = {}> extends 
     return this.properties.message || this.getCode().getDefaultMessage() || "An unknown error occurred";
   }
 
-  getPublicMessage(): string {
-    return this.properties.publicMessage || this.getMessage();
+  isPublic(): boolean {
+    return Boolean(this.properties.public);
   }
 
   /*get computedOptions(): Required<ErrorOptions> {
@@ -157,10 +165,10 @@ export default class SendableError<D extends SendableErrorDetails = {}> extends 
 
   toResponse(): ErrorResponseBody {
     return {
-      code   : this.getCode().getId(),
-      message: this.getPublicMessage(),
+      code   : this.isPublic() ? this.getCode().getId() : ERROR_CODE_MISC_INTERNAL_ERROR.getId(),
+      message: this.isPublic() ? this.message: ERROR_CODE_MISC_INTERNAL_ERROR.getDefaultMessage()!,
       traceId: this.state.traceId,
-      details: this.properties.details || {},
+      details: (this.isPublic() && this.properties.details) || {},
     };
   }
 

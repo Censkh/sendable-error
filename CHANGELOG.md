@@ -1,3 +1,9 @@
+# 0.2.0
+
+## Breaking Changes
+
+- add `public` property and obfuscate by default
+
 # 0.1.0
 
 ## Breaking Changes
