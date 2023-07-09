@@ -1,12 +1,12 @@
 import test                             from "ava";
 import SendableError                    from "../SendableError";
 import ErrorCode                        from "../ErrorCode";
-import {ERROR_CODE_MISC_INTERNAL_ERROR} from "../DefaultCodes";
+import {isSendableError}                from "../Utils";
 
 test("cause is added", (t) => {
   const root = new SendableError({
     message: "A bug",
-    code   : ERROR_CODE_MISC_INTERNAL_ERROR,
+    code   : ErrorCode.DEFAULT_CODE,
   });
 
   const UPDATE_USER_ERROR_CODE = new ErrorCode({
@@ -21,4 +21,5 @@ test("cause is added", (t) => {
   });
 
   t.is(wrapped.getCause()?.message, "A bug");
+  t.is(isSendableError(wrapped), true);
 });

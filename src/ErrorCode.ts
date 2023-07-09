@@ -1,6 +1,6 @@
-import SendableError, {isSendableError, SendableErrorDetails} from "./SendableError";
-//import {ErrorOptions}                   from "./Types";
-import {ERROR_CODE_MISC_INTERNAL_ERROR}                       from "./DefaultCodes";
+import type SendableError from "./SendableError";
+import type {SendableErrorDetails} from "./SendableError";
+import {isSendableError} from "./Utils";
 
 export interface ErrorCodeProperties {
   id: string,
@@ -8,6 +8,11 @@ export interface ErrorCodeProperties {
 }
 
 export default class ErrorCode<D extends SendableErrorDetails = {}> {
+
+  static DEFAULT_CODE = new ErrorCode({
+    id            : "misc/internal-error",
+    defaultMessage: `An internal error occurred`,
+  });
 
   readonly prefix: string;
 
@@ -59,7 +64,7 @@ export default class ErrorCode<D extends SendableErrorDetails = {}> {
   }
 
   static get(error: Error): ErrorCode {
-    return isSendableError(error) ? error.getCode() : ERROR_CODE_MISC_INTERNAL_ERROR;
+    return isSendableError(error) ? error.getCode() : ErrorCode.DEFAULT_CODE;
   }
 
 }

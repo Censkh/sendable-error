@@ -1,6 +1,7 @@
 import test                             from "ava";
-import SendableError, {isSendableError} from "../SendableError";
+import SendableError from "../SendableError";
 import ErrorCode                        from "../ErrorCode";
+import {isSendableError}                from "../Utils";
 
 test("getting codes works", (t) => {
   const code = new ErrorCode({
@@ -22,6 +23,8 @@ test("getting codes works", (t) => {
 
   {
     const error    = new Error("A bug");
+    t.is(isSendableError(error), false);
+
     const sendable = SendableError.of(error);
     t.is(sendable.getMessage(), "A bug");
     t.deepEqual(sendable.toResponse(), {

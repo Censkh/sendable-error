@@ -1,14 +1,10 @@
 import ErrorCode                              from "./ErrorCode";
 import {ErrorResponseBody, ResponseWithError} from "./Types";
-import {ERROR_CODE_MISC_INTERNAL_ERROR}       from "./DefaultCodes";
 import {getErrorLogger}                       from "./Logging";
-import crypto                                 from "crypto";
-
-/*export const DEFAULT_ERROR_OPTIONS: Required<ErrorOptions> = {
-  statusCode : 500,
-  severity   : "warn",
-  displayName: "Error",
-};*/
+// @ts-ignore
+import sha1                                   from "js-sha1";
+import {SENDABLE_ERROR_INSTANCE_SYMBOL}       from "./Consts";
+import {isSendableError}                      from "./Utils";
 
 const byteToHex: string[] = [];
 
@@ -34,16 +30,14 @@ function stringify(arr: any, offset = 0) {
  */
 export const getTraceId = (error: Error): string => {
   const errorString = error.stack || error.toString();
-  return stringify(crypto.createHash("sha1").update(Buffer.from(errorString)).digest());
-};
 
-
-export const isSendableError = (error: Error): error is SendableError => {
-  return error instanceof SendableError;
+  const sha = sha1.create();
+  sha.update(errorString);
+  return stringify(sha.array());
 };
 
 const DEFAULT_PROPERTIES: SendableErrorProperties<any> = {
-  code: ERROR_CODE_MISC_INTERNAL_ERROR,
+  code: ErrorCode.DEFAULT_CODE,
 };
 
 export type SendableErrorDetails = Record<string, any>;
@@ -67,6 +61,8 @@ const CONSTRUCTOR_MESSAGE = "__$$sendable-error-message__";
  * An error with a known cause that is sendable
  */
 export default class SendableError<D extends SendableErrorDetails = {}> extends Error {
+
+  private readonly [SENDABLE_ERROR_INSTANCE_SYMBOL] = true;
 
   private properties!: SendableErrorProperties<D>;
   private state!: SendableErrorState;
@@ -92,8 +88,8 @@ export default class SendableError<D extends SendableErrorDetails = {}> extends 
       Object.setPrototypeOf(error, SendableError.prototype);
       result     = error as SendableError<D>;
       properties = {
-        code         : ERROR_CODE_MISC_INTERNAL_ERROR,
-        message      : error.message,
+        code   : ErrorCode.DEFAULT_CODE,
+        message: error.message,
         ...properties,
       };
     }
@@ -112,7 +108,7 @@ export default class SendableError<D extends SendableErrorDetails = {}> extends 
   private overrideProperty(name: string, getter: () => any) {
     const boundGetter = getter.bind(this);
     Object.defineProperty(this, name, {
-      value: boundGetter(),
+      value       : boundGetter(),
       configurable: true,
     });
   }
@@ -144,7 +140,7 @@ export default class SendableError<D extends SendableErrorDetails = {}> extends 
   }
 
   getCode(): ErrorCode {
-    return this.properties.code || ERROR_CODE_MISC_INTERNAL_ERROR;
+    return this.properties.code || ErrorCode.DEFAULT_CODE;
   }
 
   getMessage(): string {
@@ -165,8 +161,8 @@ export default class SendableError<D extends SendableErrorDetails = {}> extends 
 
   toResponse(): ErrorResponseBody {
     return {
-      code   : this.isPublic() ? this.getCode().getId() : ERROR_CODE_MISC_INTERNAL_ERROR.getId(),
-      message: this.isPublic() ? this.message: ERROR_CODE_MISC_INTERNAL_ERROR.getDefaultMessage()!,
+      code   : this.isPublic() ? this.getCode().getId() : ErrorCode.DEFAULT_CODE.getId(),
+      message: this.isPublic() ? this.message : ErrorCode.DEFAULT_CODE.getDefaultMessage()!,
       traceId: this.state.traceId,
       details: (this.isPublic() && this.properties.details) || {},
     };

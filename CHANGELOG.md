@@ -1,3 +1,10 @@
+# 0.2.3
+
+## Fixes
+
+- fix ESM build by untangling some circular dependencies
+- add support for `getTraceId` in environments without `crypto`
+
 # 0.2.0
 
 ## Breaking Changes
