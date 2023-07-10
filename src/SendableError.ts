@@ -1,8 +1,7 @@
 import ErrorCode                              from "./ErrorCode";
 import {ErrorResponseBody, ResponseWithError} from "./Types";
 import {getErrorLogger}                       from "./Logging";
-// @ts-ignore
-import sha1                                   from "js-sha1";
+import sha1                                   from "./vendor/sha1";
 import {SENDABLE_ERROR_INSTANCE_SYMBOL}       from "./Consts";
 import {isSendableError}                      from "./Utils";
 
@@ -31,6 +30,7 @@ function stringify(arr: any, offset = 0) {
 export const getTraceId = (error: Error): string => {
   const errorString = error.stack || error.toString();
 
+  // @ts-ignore
   const sha = sha1.create();
   sha.update(errorString);
   return stringify(sha.array());
