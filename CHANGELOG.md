@@ -1,3 +1,9 @@
+# 0.2.5
+
+## Changes
+
+- `toResponse()` can be passed extra details
+
 # 0.2.3
 
 ## Fixes

@@ -55,6 +55,10 @@ export interface SendableErrorState {
   traceId: string,
 }
 
+export interface ToResponseOptions {
+  details?: SendableErrorDetails;
+}
+
 const CONSTRUCTOR_MESSAGE = "__$$sendable-error-message__";
 
 /**
@@ -82,8 +86,6 @@ export default class SendableError<D extends SendableErrorDetails = {}> extends 
           ...properties,
         };
       }
-
-
     } else {
       Object.setPrototypeOf(error, SendableError.prototype);
       result     = error as SendableError<D>;
@@ -159,12 +161,15 @@ export default class SendableError<D extends SendableErrorDetails = {}> extends 
     };
   }*/
 
-  toResponse(): ErrorResponseBody {
+  toResponse(options?: ToResponseOptions): ErrorResponseBody {
     return {
       code   : this.isPublic() ? this.getCode().getId() : ErrorCode.DEFAULT_CODE.getId(),
       message: this.isPublic() ? this.message : ErrorCode.DEFAULT_CODE.getDefaultMessage()!,
       traceId: this.state.traceId,
-      details: (this.isPublic() && this.properties.details) || {},
+      details: {
+        ...(this.isPublic() && this.properties.details),
+        ...(options?.details),
+      },
     };
   }
 
@@ -202,9 +207,9 @@ export default class SendableError<D extends SendableErrorDetails = {}> extends 
   log(source: string, message?: string, info?: any) {
     this.state.logged   = true;
     /**const computedOptions = {
-      ...this.computedOptions,
-      ...(options || {}),
-    };**/
+     ...this.computedOptions,
+     ...(options || {}),
+     };**/
     const traceId       = this.getTraceId();
     const loggedMessage = message || this.getMessage();
 
