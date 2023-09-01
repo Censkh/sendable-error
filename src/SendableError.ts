@@ -86,7 +86,7 @@ export default class SendableError<D extends SendableErrorDetails = {}> extends 
           ...properties,
         };
       }
-    } else {
+    } else if (error instanceof Error) {
       Object.setPrototypeOf(error, SendableError.prototype);
       result     = error as SendableError<D>;
       properties = {
@@ -94,6 +94,11 @@ export default class SendableError<D extends SendableErrorDetails = {}> extends 
         message: error.message,
         ...properties,
       };
+    } else {
+      // bad input
+      return new SendableError<D>({
+        message: typeof error === "string" ? error : JSON.stringify(error),
+      });
     }
 
     result.init(properties);

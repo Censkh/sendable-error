@@ -1,3 +1,9 @@
+# 0.2.6
+
+## Fixes
+
+- don't throw on bad input
+
 # 0.2.5
 
 ## Changes

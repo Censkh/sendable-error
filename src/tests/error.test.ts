@@ -1,7 +1,7 @@
-import test                             from "ava";
-import SendableError from "../SendableError";
-import ErrorCode                        from "../ErrorCode";
-import {isSendableError}                from "../Utils";
+import test              from "ava";
+import SendableError     from "../SendableError";
+import ErrorCode         from "../ErrorCode";
+import {isSendableError} from "../Utils";
 
 test("getting codes works", (t) => {
   const code = new ErrorCode({
@@ -22,7 +22,7 @@ test("getting codes works", (t) => {
   }
 
   {
-    const error    = new Error("A bug");
+    const error = new Error("A bug");
     t.is(isSendableError(error), false);
 
     const sendable = SendableError.of(error);
@@ -53,5 +53,31 @@ test("getting codes works", (t) => {
     });
 
     t.deepEqual(sendable.toResponse(), SendableError.of(sendable).toResponse());
+  }
+});
+
+test("bad input", (t) => {
+  {
+    const sendable = SendableError.of("bad data" as any);
+    t.is(sendable.message, "bad data");
+  }
+
+  {
+    const sendable = SendableError.of(12123123 as any);
+    t.is(sendable.message, "12123123");
+  }
+
+  {
+    const input    = {"hello": "world"};
+    const sendable = SendableError.of(input as any);
+    t.is(sendable.message, JSON.stringify(input));
+  }
+
+  {
+    const sendable = new SendableError({
+      cause: 123123 as any,
+    });
+    sendable.log("Source");
+    t.is(sendable.message, "An internal error occurred");
   }
 });
