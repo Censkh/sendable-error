@@ -36,18 +36,35 @@ export const getTraceId = (error: Error): string => {
   return stringify(sha.array());
 };
 
-const DEFAULT_PROPERTIES: SendableErrorProperties<any> = {
+const DEFAULT_PROPERTIES: Partial<SendableErrorProperties<any>> = {
   code: ErrorCode.DEFAULT_CODE,
+};
+
+const resolveCode = (code?: ErrorCode | string): ErrorCode => {
+  if (code instanceof ErrorCode) {
+    return code;
+  }
+
+  if (typeof code === "string") {
+    return new ErrorCode({id: code, defaultMessage: code});
+  }
+
+  return ErrorCode.DEFAULT_CODE;
 };
 
 export type SendableErrorDetails = Record<string, any>;
 
 export interface SendableErrorProperties<D extends SendableErrorDetails = {}> {
-  code?: ErrorCode,
-  message?: string,
+  code: ErrorCode,
+  message: string,
   public?: boolean,
   details?: D & Record<string, any>,
   cause?: Error
+}
+
+export interface SendableErrorOptions<D extends SendableErrorDetails = {}> extends Omit<SendableErrorProperties<D>, "code" | "message"> {
+  code?: ErrorCode | string,
+  message?: string,
 }
 
 export interface SendableErrorState {
@@ -56,6 +73,7 @@ export interface SendableErrorState {
 }
 
 export interface ToResponseOptions {
+  public?: boolean,
   details?: SendableErrorDetails;
 }
 
@@ -75,24 +93,25 @@ export default class SendableError<D extends SendableErrorDetails = {}> extends 
     return isSendableError(error);
   }
 
-  public static of<D extends SendableErrorDetails>(error: Error, properties?: Partial<SendableErrorProperties<D>>): SendableError<D> {
+  public static of<D extends SendableErrorDetails>(error: Error, options?: Partial<SendableErrorOptions<D>>): SendableError<D> {
     let result: SendableError<D>;
 
     if (error instanceof SendableError) {
       result = error;
-      if (properties?.code && !properties?.message) {
-        properties = {
-          message: properties?.code?.getDefaultMessage(),
-          ...properties,
+      if (options?.code && !options?.message) {
+        const code = resolveCode(options.code);
+        options = {
+          message: code.getDefaultMessage(),
+          ...options,
         };
       }
     } else if (error instanceof Error) {
       Object.setPrototypeOf(error, SendableError.prototype);
-      result     = error as SendableError<D>;
-      properties = {
+      result  = error as SendableError<D>;
+      options = {
         code   : ErrorCode.DEFAULT_CODE,
         message: error.message,
-        ...properties,
+        ...options,
       };
     } else {
       // bad input
@@ -101,30 +120,43 @@ export default class SendableError<D extends SendableErrorDetails = {}> extends 
       });
     }
 
-    result.init(properties);
+    result.init(options);
 
     return result;
   }
 
-  constructor(properties?: SendableErrorProperties<D>) {
+  constructor(options?: SendableErrorOptions<D>) {
     super(CONSTRUCTOR_MESSAGE);
 
-    this.init(properties);
+    this.init(options);
   }
 
-  private overrideProperty(name: string, getter: () => any) {
-    const boundGetter = getter.bind(this);
-    Object.defineProperty(this, name, {
-      value       : boundGetter(),
-      configurable: true,
-    });
-  }
+  private overrideProperty(name: string, value: any) {
+    const descriptor = Object.getOwnPropertyDescriptor(this, name);
 
-  private init(properties?: Partial<SendableErrorProperties<D>>) {
-    if (!this.properties) {
-      this.properties = {...DEFAULT_PROPERTIES, ...properties};
+    if (descriptor?.configurable === false) {
+      // cannot update
     } else {
-      Object.assign(this.properties, properties);
+      Object.defineProperty(this, name, {
+        value       : value,
+        configurable: true,
+      });
+    }
+
+
+  }
+
+  private init(options?: Partial<SendableErrorOptions<D>>) {
+    if (!this.properties) {
+      const code  = resolveCode(options?.code);
+      let message = options?.message;
+      if (!message) {
+        message = code.getDefaultMessage();
+      }
+
+      this.properties = {...DEFAULT_PROPERTIES, ...options, message: message!, code};
+    } else {
+      Object.assign(this.properties, options);
     }
 
     this.state = {
@@ -132,10 +164,10 @@ export default class SendableError<D extends SendableErrorDetails = {}> extends 
       traceId: getTraceId(this),
     };
 
-    this.overrideProperty("code", this.getCode);
-    this.overrideProperty("message", this.getMessage);
-    this.overrideProperty("cause", this.getCause);
-    this.overrideProperty("stack", this.getStack);
+    this.overrideProperty("code", this.getCode());
+    this.overrideProperty("message", this.getMessage());
+    this.overrideProperty("cause", this.getCause());
+    this.overrideProperty("stack", this.getStack());
   }
 
   getStack(): string | undefined {
@@ -167,12 +199,14 @@ export default class SendableError<D extends SendableErrorDetails = {}> extends 
   }*/
 
   toResponse(options?: ToResponseOptions): ErrorResponseBody {
+    const responsePublic = typeof options?.public === "boolean" ? options.public : this.isPublic();
+
     return {
-      code   : this.isPublic() ? this.getCode().getId() : ErrorCode.DEFAULT_CODE.getId(),
-      message: this.isPublic() ? this.message : ErrorCode.DEFAULT_CODE.getDefaultMessage()!,
+      code   : responsePublic ? this.getCode().getId() : ErrorCode.DEFAULT_CODE.getId(),
+      message: responsePublic ? this.message : ErrorCode.DEFAULT_CODE.getDefaultMessage()!,
       traceId: this.state.traceId,
       details: {
-        ...(this.isPublic() && this.properties.details),
+        ...(responsePublic && this.properties.details),
         ...(options?.details),
       },
     };

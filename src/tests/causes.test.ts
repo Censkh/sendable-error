@@ -1,9 +1,8 @@
-import test                             from "ava";
 import SendableError                    from "../SendableError";
 import ErrorCode                        from "../ErrorCode";
 import {isSendableError}                from "../Utils";
 
-test("cause is added", (t) => {
+test("cause is added", () => {
   const root = new SendableError({
     message: "A bug",
     code   : ErrorCode.DEFAULT_CODE,
@@ -20,6 +19,6 @@ test("cause is added", (t) => {
     cause  : root,
   });
 
-  t.is(wrapped.getCause()?.message, "A bug");
-  t.is(isSendableError(wrapped), true);
+  expect(wrapped.getCause()?.message).toBe("A bug");
+  expect(isSendableError(wrapped)).toBe(true);
 });

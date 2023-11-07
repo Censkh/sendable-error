@@ -1,3 +1,16 @@
+# 0.3.1
+
+## Fixes
+
+- don't try to override unconfigurable properties
+
+# 0.3.0
+
+## Changes
+
+- general cleanup
+- `SendableError.toResponse({public: boolean})`
+
 # 0.2.6
 
 ## Fixes
