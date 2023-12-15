@@ -1,9 +1,9 @@
-import ErrorCode                              from "./ErrorCode";
-import {ErrorResponseBody, ResponseWithError} from "./Types";
-import {getErrorLogger}                       from "./Logging";
-import sha1                                   from "./vendor/sha1";
-import {SENDABLE_ERROR_INSTANCE_SYMBOL}       from "./Consts";
-import {isSendableError}                      from "./Utils";
+import { SENDABLE_ERROR_INSTANCE_SYMBOL } from "./Consts";
+import ErrorCode from "./ErrorCode";
+import { getErrorLogger } from "./Logging";
+import { EmptyObject, ErrorResponseBody, ResponseWithError } from "./Types";
+import { isSendableError } from "./Utils";
+import sha1 from "./vendor/sha1";
 
 const byteToHex: string[] = [];
 
@@ -14,7 +14,9 @@ for (let i = 0; i < 256; ++i) {
 function stringify(arr: any, offset = 0) {
   // Note: Be careful editing this code!  It's been tuned for performance
   // and works in ways you may not expect. See https://github.com/uuidjs/uuid/pull/434
-  const uuid = (byteToHex[arr[offset + 0]] + byteToHex[arr[offset + 1]] + byteToHex[arr[offset + 2]] + byteToHex[arr[offset + 3]] + "-" + byteToHex[arr[offset + 4]] + byteToHex[arr[offset + 5]] + "-" + byteToHex[arr[offset + 6]] + byteToHex[arr[offset + 7]] + "-" + byteToHex[arr[offset + 8]] + byteToHex[arr[offset + 9]] + "-" + byteToHex[arr[offset + 10]] + byteToHex[arr[offset + 11]] + byteToHex[arr[offset + 12]] + byteToHex[arr[offset + 13]] + byteToHex[arr[offset + 14]] + byteToHex[arr[offset + 15]]).toLowerCase(); // Consistency check for valid UUID.  If this throws, it's likely due to one
+  const uuid = `${byteToHex[arr[offset + 0]] + byteToHex[arr[offset + 1]] + byteToHex[arr[offset + 2]] + byteToHex[arr[offset + 3]]}-${byteToHex[arr[offset + 4]]}${byteToHex[arr[offset + 5]]}-${byteToHex[arr[offset + 6]]}${byteToHex[arr[offset + 7]]}-${byteToHex[arr[offset + 8]]}${byteToHex[arr[offset + 9]]}-${
+    byteToHex[arr[offset + 10]]
+  }${byteToHex[arr[offset + 11]]}${byteToHex[arr[offset + 12]]}${byteToHex[arr[offset + 13]]}${byteToHex[arr[offset + 14]]}${byteToHex[arr[offset + 15]]}`.toLowerCase(); // Consistency check for valid UUID.  If this throws, it's likely due to one
   // of the following:
   // - One or more input array values don't map to a hex octet (leading to
   // "undefined" in the uuid)
@@ -22,7 +24,6 @@ function stringify(arr: any, offset = 0) {
 
   return uuid;
 }
-
 
 /**
  * Transforms an error into a deterministic error identifier to enable easy log searching
@@ -46,7 +47,7 @@ const resolveCode = (code?: ErrorCode | string): ErrorCode => {
   }
 
   if (typeof code === "string") {
-    return new ErrorCode({id: code, defaultMessage: code});
+    return new ErrorCode({ id: code, defaultMessage: code });
   }
 
   return ErrorCode.DEFAULT_CODE;
@@ -54,26 +55,26 @@ const resolveCode = (code?: ErrorCode | string): ErrorCode => {
 
 export type SendableErrorDetails = Record<string, any>;
 
-export interface SendableErrorProperties<D extends SendableErrorDetails = {}> {
-  code: ErrorCode,
-  message: string,
-  public?: boolean,
-  details?: D & Record<string, any>,
-  cause?: Error
+export interface SendableErrorProperties<D extends SendableErrorDetails = EmptyObject> {
+  code: ErrorCode;
+  message: string;
+  public?: boolean;
+  details?: D & Record<string, any>;
+  cause?: Error;
 }
 
-export interface SendableErrorOptions<D extends SendableErrorDetails = {}> extends Omit<SendableErrorProperties<D>, "code" | "message"> {
-  code?: ErrorCode | string,
-  message?: string,
+export interface SendableErrorOptions<D extends SendableErrorDetails = EmptyObject> extends Omit<SendableErrorProperties<D>, "code" | "message"> {
+  code?: ErrorCode | string;
+  message?: string;
 }
 
 export interface SendableErrorState {
-  logged: boolean,
-  traceId: string,
+  logged: boolean;
+  traceId: string;
 }
 
 export interface ToResponseOptions {
-  public?: boolean,
+  public?: boolean;
   details?: SendableErrorDetails;
 }
 
@@ -82,8 +83,7 @@ const CONSTRUCTOR_MESSAGE = "__$$sendable-error-message__";
 /**
  * An error with a known cause that is sendable
  */
-export default class SendableError<D extends SendableErrorDetails = {}> extends Error {
-
+export default class SendableError<D extends SendableErrorDetails = EmptyObject> extends Error {
   private readonly [SENDABLE_ERROR_INSTANCE_SYMBOL] = true;
 
   private properties!: SendableErrorProperties<D>;
@@ -96,22 +96,24 @@ export default class SendableError<D extends SendableErrorDetails = {}> extends 
   public static of<D extends SendableErrorDetails>(error: Error, options?: Partial<SendableErrorOptions<D>>): SendableError<D> {
     let result: SendableError<D>;
 
+    let resolvedOptions = options ?? {};
+
     if (error instanceof SendableError) {
       result = error;
-      if (options?.code && !options?.message) {
-        const code = resolveCode(options.code);
-        options = {
+      if (resolvedOptions?.code && !resolvedOptions?.message) {
+        const code = resolveCode(resolvedOptions.code);
+        resolvedOptions = {
           message: code.getDefaultMessage(),
-          ...options,
+          ...resolvedOptions,
         };
       }
     } else if (error instanceof Error) {
       Object.setPrototypeOf(error, SendableError.prototype);
-      result  = error as SendableError<D>;
-      options = {
-        code   : ErrorCode.DEFAULT_CODE,
+      result = error as SendableError<D>;
+      resolvedOptions = {
+        code: ErrorCode.DEFAULT_CODE,
         message: error.message,
-        ...options,
+        ...resolvedOptions,
       };
     } else {
       // bad input
@@ -120,7 +122,7 @@ export default class SendableError<D extends SendableErrorDetails = {}> extends 
       });
     }
 
-    result.init(options);
+    result.init(resolvedOptions);
 
     return result;
   }
@@ -138,29 +140,27 @@ export default class SendableError<D extends SendableErrorDetails = {}> extends 
       // cannot update
     } else {
       Object.defineProperty(this, name, {
-        value       : value,
+        value: value,
         configurable: true,
       });
     }
-
-
   }
 
   private init(options?: Partial<SendableErrorOptions<D>>) {
     if (!this.properties) {
-      const code  = resolveCode(options?.code);
+      const code = resolveCode(options?.code);
       let message = options?.message;
       if (!message) {
         message = code.getDefaultMessage();
       }
 
-      this.properties = {...DEFAULT_PROPERTIES, ...options, message: message!, code};
+      this.properties = { ...DEFAULT_PROPERTIES, ...options, message: message!, code };
     } else {
       Object.assign(this.properties, options);
     }
 
     this.state = {
-      logged : false,
+      logged: false,
       traceId: getTraceId(this),
     };
 
@@ -202,12 +202,12 @@ export default class SendableError<D extends SendableErrorDetails = {}> extends 
     const responsePublic = typeof options?.public === "boolean" ? options.public : this.isPublic();
 
     return {
-      code   : responsePublic ? this.getCode().getId() : ErrorCode.DEFAULT_CODE.getId(),
+      code: responsePublic ? this.getCode().getId() : ErrorCode.DEFAULT_CODE.getId(),
       message: responsePublic ? this.message : ErrorCode.DEFAULT_CODE.getDefaultMessage()!,
       traceId: this.state.traceId,
       details: {
         ...(responsePublic && this.properties.details),
-        ...(options?.details),
+        ...options?.details,
       },
     };
   }
@@ -244,35 +244,34 @@ export default class SendableError<D extends SendableErrorDetails = {}> extends 
    * Log out info on error
    */
   log(source: string, message?: string, info?: any) {
-    this.state.logged   = true;
+    this.state.logged = true;
     /**const computedOptions = {
      ...this.computedOptions,
      ...(options || {}),
      };**/
-    const traceId       = this.getTraceId();
+    const traceId = this.getTraceId();
     const loggedMessage = message || this.getMessage();
 
-    const providedInfo   = Object.assign({}, this.properties.details, info);
+    const providedInfo = Object.assign({}, this.properties.details, info);
     const errorInfo: any = {
       traceId: traceId,
-      code   : this.getCode().getId(),
+      code: this.getCode().getId(),
     };
 
     const computedInfo = Object.assign({}, errorInfo, providedInfo);
 
     getErrorLogger()({
       //options     : computedOptions,
-      source      : source,
-      message     : loggedMessage,
-      error       : this,
-      info        : computedInfo,
-      errorInfo   : errorInfo,
+      source: source,
+      message: loggedMessage,
+      error: this as any,
+      info: computedInfo,
+      errorInfo: errorInfo,
       providedInfo: providedInfo,
     });
 
     return this;
   }
-
 }
 
 Object.defineProperty(SendableError, "name", {

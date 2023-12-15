@@ -1,16 +1,16 @@
-import SendableError     from "../SendableError";
-import ErrorCode         from "../ErrorCode";
-import {isSendableError} from "../Utils";
+import ErrorCode from "../ErrorCode";
+import SendableError from "../SendableError";
+import { isSendableError } from "../Utils";
 
 test("getting codes works", () => {
   const code = new ErrorCode({
-    id            : "test/error-code",
+    id: "test/error-code",
     defaultMessage: "Test error code",
   });
 
   const root = new SendableError({
     message: "A bug",
-    code   : code,
+    code: code,
   });
 
   try {
@@ -27,25 +27,25 @@ test("getting codes works", () => {
     const sendable = SendableError.of(error);
     expect(sendable.getMessage()).toBe("A bug");
     expect(sendable.toResponse()).toEqual({
-      code   : "misc/internal-error",
+      code: "misc/internal-error",
       details: {},
       message: "An internal error occurred",
       traceId: sendable.getTraceId(),
     });
 
-    expect(SendableError.of(error, {public: true}).toResponse()).toEqual({
-      code   : "misc/internal-error",
+    expect(SendableError.of(error, { public: true }).toResponse()).toEqual({
+      code: "misc/internal-error",
       details: {},
       message: "A bug",
       traceId: sendable.getTraceId(),
     });
 
     const code = new ErrorCode({
-      id            : "test/error-code",
+      id: "test/error-code",
       defaultMessage: "Test error code",
     });
-    expect(SendableError.of(error, {public: true, code: code}).toResponse()).toEqual({
-      code   : "test/error-code",
+    expect(SendableError.of(error, { public: true, code: code }).toResponse()).toEqual({
+      code: "test/error-code",
       details: {},
       message: "Test error code",
       traceId: sendable.getTraceId(),
@@ -67,7 +67,7 @@ test("bad input", () => {
   }
 
   {
-    const input    = {"hello": "world"};
+    const input = { hello: "world" };
     const sendable = SendableError.of(input as any);
     expect(sendable.message).toBe(JSON.stringify(input));
   }
@@ -85,7 +85,7 @@ test("public errors", () => {
   {
     const sendable = new SendableError({
       message: "A bug",
-      code   : "test/error-code",
+      code: "test/error-code",
     });
 
     expect(sendable.toResponse()).toMatchObject({
@@ -93,26 +93,26 @@ test("public errors", () => {
       details: {},
     });
 
-    expect(sendable.toResponse({public: true})).toMatchObject({
-      code   : "test/error-code",
+    expect(sendable.toResponse({ public: true })).toMatchObject({
+      code: "test/error-code",
       details: {},
     });
 
-    const publicSendable = SendableError.of(sendable, {public: true});
+    const publicSendable = SendableError.of(sendable, { public: true });
 
     expect(publicSendable.toResponse()).toMatchObject({
-      code   : "test/error-code",
+      code: "test/error-code",
       details: {},
     });
 
-    expect(publicSendable.toResponse({public: false})).toMatchObject({
-      code   : "misc/internal-error",
+    expect(publicSendable.toResponse({ public: false })).toMatchObject({
+      code: "misc/internal-error",
       details: {},
     });
 
     // still public
     expect(SendableError.of(publicSendable).toResponse()).toMatchObject({
-      code   : "test/error-code",
+      code: "test/error-code",
       details: {},
     });
   }
@@ -121,26 +121,26 @@ test("public errors", () => {
 test("overriding unconfigurable properties", () => {
   const meanError = new Error("I have unconfigurable properties");
   Object.defineProperty(meanError, "message", {
-    value       : "I'm mean",
-    configurable:  false,
+    value: "I'm mean",
+    configurable: false,
   });
   Object.defineProperty(meanError, "code", {
-    value       : "VERY_MEAN",
-    configurable:  false,
+    value: "VERY_MEAN",
+    configurable: false,
   });
 
   const sendable = SendableError.of(meanError);
 
   expect(sendable.toResponse()).toMatchObject({
-    code   : "misc/internal-error",
+    code: "misc/internal-error",
     message: "An internal error occurred",
   });
   expect((sendable as any).code).toBe("VERY_MEAN");
   expect(sendable.message).toBe("I'm mean");
   expect(sendable.getMessage()).toBe("I'm mean");
   expect(sendable.getMessage()).toBe("I'm mean");
-  expect(sendable.toResponse({public: true})).toMatchObject({
-    code   : "misc/internal-error",
+  expect(sendable.toResponse({ public: true })).toMatchObject({
+    code: "misc/internal-error",
     message: "I'm mean",
   });
-})
+});

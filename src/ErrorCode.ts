@@ -1,17 +1,17 @@
 import type SendableError from "./SendableError";
-import type {SendableErrorDetails} from "./SendableError";
-import {isSendableError} from "./Utils";
+import type { SendableErrorDetails } from "./SendableError";
+import { EmptyObject } from "./Types";
+import { isSendableError } from "./Utils";
 
 export interface ErrorCodeProperties {
-  id: string,
-  defaultMessage: string,
+  id: string;
+  defaultMessage: string;
 }
 
-export default class ErrorCode<D extends SendableErrorDetails = {}> {
-
+export default class ErrorCode<D extends SendableErrorDetails = EmptyObject> {
   static DEFAULT_CODE = new ErrorCode({
-    id            : "misc/internal-error",
-    defaultMessage: `An internal error occurred`,
+    id: "misc/internal-error",
+    defaultMessage: "An internal error occurred",
   });
 
   readonly prefix: string;
@@ -57,7 +57,7 @@ export default class ErrorCode<D extends SendableErrorDetails = {}> {
     if (code.prefix !== this.prefix) {
       console.error("[sendable-error] Extension doesn't share same prefix, this doesn't seem right", {
         originalPrefix: this.prefix,
-        newPrefix     : code.prefix,
+        newPrefix: code.prefix,
       });
     }
     return code;
@@ -66,5 +66,4 @@ export default class ErrorCode<D extends SendableErrorDetails = {}> {
   static get(error: Error): ErrorCode {
     return isSendableError(error) ? error.getCode() : ErrorCode.DEFAULT_CODE;
   }
-
 }

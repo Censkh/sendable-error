@@ -1,3 +1,5 @@
+export type EmptyObject = Record<string, never>;
+
 export type Severity = "debug" | "info" | "warn" | "error";
 
 export interface ResponseWithError {
@@ -16,7 +18,7 @@ export interface ResponseWithError {
 }*/
 
 export interface ErrorResponseBody {
-  code: string,
+  code: string;
   message: string;
   traceId: string;
   details: any;
