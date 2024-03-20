@@ -6,19 +6,19 @@
   "module": "esm/index.js",
   "sideEffects": false,
   "scripts": {
-    "test": "bun run test:unit && bun run test:types && bun run check",
+    "test": "npm run test:unit && npm run test:types && npm run check",
     "test:unit": "bun test",
     "test:types": "tsc --noEmit -p .",
-    "prepublishOnly": "bun run test && bun run build",
+    "prepublishOnly": "npm run test && npm run build",
     "example:start": "cd example && npm run start",
     "example:dev": "cd example && npm run dev",
     "check:fix": "bun x @biomejs/biome check --apply-unsafe src",
     "check": "bun x @biomejs/biome check src",
     "cleanup": "rimraf esm && rimraf cjs",
-    "build": "bun run cleanup && npm run build:esm && npm run build:cjs",
+    "build": "npm run cleanup && npm run build:esm && npm run build:cjs",
     "build:esm": "tsc --module es2015 --outDir esm",
     "build:cjs": "tsc --module commonjs --outDir cjs",
-    "build:watch": "bun run cleanup && npm-run-all -p \"build:esm -- -w\" \"build:cjs -- -w\""
+    "build:watch": "npm run cleanup && npm-run-all -p \"build:esm -- -w\" \"build:cjs -- -w\""
   },
   "exports": {
     ".": {
