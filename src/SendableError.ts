@@ -131,12 +131,13 @@ export default class SendableError<D extends SendableErrorDetails = EmptyObject>
     } else {
       // bad input
       const sendableError = new SendableError<D>({
-        // @ts-ignore
         message:
           typeof error === "string"
             ? error
-            : typeof error?.message === "string"
-              ? error.message
+            : // @ts-ignore
+              typeof error?.message === "string"
+              ? // @ts-ignore
+                error.message
               : JSON.stringify(error),
       });
       sendableError.stack = undefined;
