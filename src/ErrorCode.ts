@@ -21,7 +21,9 @@ export default class ErrorCode<D extends SendableErrorDetails = EmptyObject> {
   constructor(private readonly properties: ErrorCodeProperties /*options?: ErrorOptions*/) {
     const parts = properties.id.split("/");
     if (parts.length !== 2) {
-      console.error(`[sendable-error] Invalid error code '${properties.id}' provided, must be of form 'prefix/descriptive-name'`);
+      console.error(
+        `[sendable-error] Invalid error code '${properties.id}' provided, must be of form 'prefix/descriptive-name'`,
+      );
     }
     this.prefix = properties.id.split("/")[0];
   }

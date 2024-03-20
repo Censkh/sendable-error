@@ -1,3 +1,9 @@
+# 0.4.0
+
+## Breaking Changes
+
+- `SendableError.of()` no longer mutates the original error
+
 # 0.3.2
 
 - add `toString()` for `ErrorCode`

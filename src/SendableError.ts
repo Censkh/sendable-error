@@ -14,9 +14,15 @@ for (let i = 0; i < 256; ++i) {
 function stringify(arr: any, offset = 0) {
   // Note: Be careful editing this code!  It's been tuned for performance
   // and works in ways you may not expect. See https://github.com/uuidjs/uuid/pull/434
-  const uuid = `${byteToHex[arr[offset + 0]] + byteToHex[arr[offset + 1]] + byteToHex[arr[offset + 2]] + byteToHex[arr[offset + 3]]}-${byteToHex[arr[offset + 4]]}${byteToHex[arr[offset + 5]]}-${byteToHex[arr[offset + 6]]}${byteToHex[arr[offset + 7]]}-${byteToHex[arr[offset + 8]]}${byteToHex[arr[offset + 9]]}-${
-    byteToHex[arr[offset + 10]]
-  }${byteToHex[arr[offset + 11]]}${byteToHex[arr[offset + 12]]}${byteToHex[arr[offset + 13]]}${byteToHex[arr[offset + 14]]}${byteToHex[arr[offset + 15]]}`.toLowerCase(); // Consistency check for valid UUID.  If this throws, it's likely due to one
+  const uuid = `${
+    byteToHex[arr[offset + 0]] + byteToHex[arr[offset + 1]] + byteToHex[arr[offset + 2]] + byteToHex[arr[offset + 3]]
+  }-${byteToHex[arr[offset + 4]]}${byteToHex[arr[offset + 5]]}-${byteToHex[arr[offset + 6]]}${
+    byteToHex[arr[offset + 7]]
+  }-${byteToHex[arr[offset + 8]]}${byteToHex[arr[offset + 9]]}-${byteToHex[arr[offset + 10]]}${
+    byteToHex[arr[offset + 11]]
+  }${byteToHex[arr[offset + 12]]}${byteToHex[arr[offset + 13]]}${byteToHex[arr[offset + 14]]}${
+    byteToHex[arr[offset + 15]]
+  }`.toLowerCase(); // Consistency check for valid UUID.  If this throws, it's likely due to one
   // of the following:
   // - One or more input array values don't map to a hex octet (leading to
   // "undefined" in the uuid)
@@ -60,10 +66,11 @@ export interface SendableErrorProperties<D extends SendableErrorDetails = EmptyO
   message: string;
   public?: boolean;
   details?: D & Record<string, any>;
-  cause?: Error;
+  cause?: unknown;
 }
 
-export interface SendableErrorOptions<D extends SendableErrorDetails = EmptyObject> extends Omit<SendableErrorProperties<D>, "code" | "message"> {
+export interface SendableErrorOptions<D extends SendableErrorDetails = EmptyObject>
+  extends Omit<SendableErrorProperties<D>, "code" | "message"> {
   code?: ErrorCode | string;
   message?: string;
 }
@@ -93,7 +100,10 @@ export default class SendableError<D extends SendableErrorDetails = EmptyObject>
     return isSendableError(error);
   }
 
-  public static of<D extends SendableErrorDetails>(error: Error, options?: Partial<SendableErrorOptions<D>>): SendableError<D> {
+  public static of<D extends SendableErrorDetails>(
+    error: Error,
+    options?: Partial<SendableErrorOptions<D>>,
+  ): SendableError<D> {
     let result: SendableError<D>;
 
     let resolvedOptions = options ?? {};
@@ -108,11 +118,14 @@ export default class SendableError<D extends SendableErrorDetails = EmptyObject>
         };
       }
     } else if (error instanceof Error) {
-      Object.setPrototypeOf(error, SendableError.prototype);
-      result = error as SendableError<D>;
+      const copiedError = new Error(error.message);
+      copiedError.stack = error.stack;
+      Object.setPrototypeOf(copiedError, SendableError.prototype);
+      result = copiedError as SendableError<D>;
       resolvedOptions = {
         code: ErrorCode.DEFAULT_CODE,
         message: error.message,
+        cause: error.cause as Error,
         ...resolvedOptions,
       };
     } else {
@@ -174,7 +187,7 @@ export default class SendableError<D extends SendableErrorDetails = EmptyObject>
     return this.stack?.replace(CONSTRUCTOR_MESSAGE, this.getMessage());
   }
 
-  getCause(): Error | undefined {
+  getCause(): unknown | undefined {
     return this.properties.cause;
   }
 
