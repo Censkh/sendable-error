@@ -102,7 +102,7 @@ export default class SendableError<D extends SendableErrorDetails = EmptyObject>
 
   public static of<D extends SendableErrorDetails>(
     error: Error,
-    options?: Partial<SendableErrorOptions<D>>,
+    options?: Partial<SendableErrorOptions<D>> & { publicByDefault?: boolean },
   ): SendableError<D> {
     let result: SendableError<D>;
 
@@ -126,11 +126,13 @@ export default class SendableError<D extends SendableErrorDetails = EmptyObject>
         code: ErrorCode.DEFAULT_CODE,
         message: error.message,
         cause: error.cause as Error,
+        public: resolvedOptions.publicByDefault,
         ...resolvedOptions,
       };
     } else {
       // bad input
       const sendableError = new SendableError<D>({
+        public: resolvedOptions.publicByDefault,
         message:
           typeof error === "string"
             ? error
