@@ -66,4 +66,8 @@ export default class ErrorCode<D extends SendableErrorDetails = EmptyObject> {
   static get(error: Error): ErrorCode {
     return isSendableError(error) ? error.getCode() : ErrorCode.DEFAULT_CODE;
   }
+
+  toString() {
+    return this.getId();
+  }
 }
