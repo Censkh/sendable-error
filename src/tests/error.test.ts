@@ -62,17 +62,27 @@ test("bad input", () => {
   {
     const sendable = SendableError.of("bad data" as any);
     expect(sendable.message).toBe("bad data");
+    expect(sendable.stack).toBeUndefined();
   }
 
   {
     const sendable = SendableError.of(12123123 as any);
     expect(sendable.message).toBe("12123123");
+    expect(sendable.stack).toBeUndefined();
   }
 
   {
     const input = { hello: "world" };
     const sendable = SendableError.of(input as any);
     expect(sendable.message).toBe(JSON.stringify(input));
+    expect(sendable.stack).toBeUndefined();
+  }
+
+  {
+    const input = { message: "bad data" };
+    const sendable = SendableError.of(input as any);
+    expect(sendable.message).toBe("bad data");
+    expect(sendable.stack).toBeUndefined();
   }
 
   {

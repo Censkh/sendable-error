@@ -130,9 +130,18 @@ export default class SendableError<D extends SendableErrorDetails = EmptyObject>
       };
     } else {
       // bad input
-      return new SendableError<D>({
-        message: typeof error === "string" ? error : JSON.stringify(error),
+      const sendableError = new SendableError<D>({
+        // @ts-ignore
+        message:
+          typeof error === "string"
+            ? error
+            : typeof error?.message === "string"
+              ? error.message
+              : JSON.stringify(error),
       });
+      sendableError.stack = undefined;
+
+      return sendableError;
     }
 
     result.init(resolvedOptions);
