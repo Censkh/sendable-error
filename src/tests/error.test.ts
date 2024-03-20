@@ -1,6 +1,9 @@
 import ErrorCode from "../ErrorCode";
+import { setErrorLogger } from "../Logging";
 import SendableError from "../SendableError";
 import { isSendableError } from "../Utils";
+
+setErrorLogger((options) => {});
 
 test("getting codes works", () => {
   const code = new ErrorCode({
@@ -47,7 +50,7 @@ test("getting codes works", () => {
     expect(SendableError.of(error, { public: true, code: code }).toResponse()).toEqual({
       code: "test/error-code",
       details: {},
-      message: "Test error code",
+      message: "A bug",
       traceId: sendable.getTraceId(),
     });
 
@@ -59,23 +62,34 @@ test("bad input", () => {
   {
     const sendable = SendableError.of("bad data" as any);
     expect(sendable.message).toBe("bad data");
+    expect(sendable.stack).toBeUndefined();
   }
 
   {
     const sendable = SendableError.of(12123123 as any);
     expect(sendable.message).toBe("12123123");
+    expect(sendable.stack).toBeUndefined();
   }
 
   {
     const input = { hello: "world" };
     const sendable = SendableError.of(input as any);
     expect(sendable.message).toBe(JSON.stringify(input));
+    expect(sendable.stack).toBeUndefined();
+  }
+
+  {
+    const input = { message: "bad data" };
+    const sendable = SendableError.of(input as any);
+    expect(sendable.message).toBe("bad data");
+    expect(sendable.stack).toBeUndefined();
   }
 
   {
     const sendable = new SendableError({
       cause: 123123 as any,
     });
+
     sendable.log("Source");
     expect(sendable.message).toBe("An internal error occurred");
   }
@@ -135,12 +149,38 @@ test("overriding unconfigurable properties", () => {
     code: "misc/internal-error",
     message: "An internal error occurred",
   });
-  expect((sendable as any).code).toBe("VERY_MEAN");
   expect(sendable.message).toBe("I'm mean");
-  expect(sendable.getMessage()).toBe("I'm mean");
+  expect((sendable as any).code).toBe(ErrorCode.DEFAULT_CODE);
   expect(sendable.getMessage()).toBe("I'm mean");
   expect(sendable.toResponse({ public: true })).toMatchObject({
     code: "misc/internal-error",
     message: "I'm mean",
   });
+});
+
+test("sendables get all relevant properties", () => {
+  const cause = new Error("Cause");
+
+  // @ts-ignore
+  const error = new Error("Test", {
+    cause,
+  });
+  const sendable = SendableError.of(error);
+  expect(sendable.stack).toBe(error.stack);
+  expect(sendable.message).toBe(error.message);
+  // @ts-ignore
+  expect(sendable.getCause()).toBe(error.cause);
+
+  expect(Object.getPrototypeOf(sendable)).toBe(SendableError.prototype);
+  expect(Object.getPrototypeOf(error)).toBe(Error.prototype);
+
+  const sendable2 = SendableError.of(sendable);
+  expect(sendable2.stack).toBe(sendable.stack);
+  expect(sendable2.message).toBe(sendable.message);
+  expect(sendable2.getTraceId()).toBe(sendable.getTraceId());
+  expect(sendable2.getCause()).toBe(sendable.getCause());
+
+  expect(Object.getPrototypeOf(sendable2)).toBe(SendableError.prototype);
+  expect(Object.getPrototypeOf(sendable)).toBe(SendableError.prototype);
+  expect(Object.getPrototypeOf(error)).toBe(Error.prototype);
 });
