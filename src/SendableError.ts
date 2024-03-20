@@ -1,7 +1,7 @@
 import { SENDABLE_ERROR_INSTANCE_SYMBOL } from "./Consts";
 import ErrorCode from "./ErrorCode";
 import { getErrorLogger } from "./Logging";
-import { EmptyObject, ErrorResponseBody, ResponseWithError } from "./Types";
+import type { EmptyObject, ErrorResponseBody, ResponseWithError } from "./Types";
 import { isSendableError } from "./Utils";
 import sha1 from "./vendor/sha1";
 

@@ -41,8 +41,8 @@
   };
 
   const nodeWrap = (method) => {
-    const crypto = require("crypto");
-    const Buffer = require("buffer").Buffer;
+    const crypto = require("node:crypto");
+    const Buffer = require("node:buffer").Buffer;
     const nodeMethod = (message) => {
       if (typeof message === "string") {
         return crypto.createHash("sha1").update(message, "utf8").digest("hex");

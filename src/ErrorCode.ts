@@ -1,6 +1,6 @@
 import type SendableError from "./SendableError";
 import type { SendableErrorDetails } from "./SendableError";
-import { EmptyObject } from "./Types";
+import type { EmptyObject } from "./Types";
 import { isSendableError } from "./Utils";
 
 export interface ErrorCodeProperties {

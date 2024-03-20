@@ -1,4 +1,4 @@
-import SendableError from "./SendableError";
+import type SendableError from "./SendableError";
 
 export type ErrorLogger = (options: ErrorLoggerOptions) => void;
 
