@@ -4,6 +4,10 @@
 
 - `SendableError.of()` no longer mutates the original error
 
+## Features
+
+- add `status` to `ErrorCode`
+
 # 0.3.2
 
 - add `toString()` for `ErrorCode`

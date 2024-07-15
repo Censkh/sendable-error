@@ -6,6 +6,7 @@ import { isSendableError } from "./Utils";
 export interface ErrorCodeProperties {
   id: string;
   defaultMessage: string;
+  status?: number;
 }
 
 export default class ErrorCode<D extends SendableErrorDetails = EmptyObject> {
@@ -67,6 +68,10 @@ export default class ErrorCode<D extends SendableErrorDetails = EmptyObject> {
 
   static get(error: Error): ErrorCode {
     return isSendableError(error) ? error.getCode() : ErrorCode.DEFAULT_CODE;
+  }
+
+  getStatus(): number | undefined {
+    return this.properties.status;
   }
 
   toString() {

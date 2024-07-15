@@ -5,6 +5,8 @@ import type { EmptyObject, ErrorResponseBody, ResponseWithError } from "./Types"
 import { isSendableError } from "./Utils";
 import sha1 from "./vendor/sha1";
 
+const DEFAULT_STATUS = 500;
+
 const byteToHex: string[] = [];
 
 for (let i = 0; i < 256; ++i) {
@@ -67,6 +69,7 @@ export interface SendableErrorProperties<D extends SendableErrorDetails = EmptyO
   public?: boolean;
   details?: D & Record<string, any>;
   cause?: unknown;
+  status?: number;
 }
 
 export interface SendableErrorOptions<D extends SendableErrorDetails = EmptyObject>
@@ -237,7 +240,15 @@ export default class SendableError<D extends SendableErrorDetails = EmptyObject>
     };
   }
 
+  getStatus(): number {
+    return this.properties.status ?? this.getCode().getStatus() ?? DEFAULT_STATUS;
+  }
+
   getDetails(): SendableErrorDetails | undefined {
+    return this.properties.details;
+  }
+
+  get details(): SendableErrorDetails | undefined {
     return this.properties.details;
   }
 
@@ -258,7 +269,7 @@ export default class SendableError<D extends SendableErrorDetails = EmptyObject>
 
     if (!res.headersSent) {
       if (typeof res.status === "function") {
-        res.status(500);
+        res.status(this.getStatus());
       }
       res.send(this.toResponse());
     }
