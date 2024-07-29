@@ -184,3 +184,7 @@ test("sendables get all relevant properties", () => {
   expect(Object.getPrototypeOf(sendable)).toBe(SendableError.prototype);
   expect(Object.getPrototypeOf(error)).toBe(Error.prototype);
 });
+
+test("handle bad data", () => {
+  SendableError.of("Bad input");
+});

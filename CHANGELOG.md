@@ -1,3 +1,9 @@
+# 0.4.1
+
+## Fixes
+
+- fix `SendableError.of(String)` throwing an error
+
 # 0.4.0
 
 ## Breaking Changes

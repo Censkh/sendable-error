@@ -145,8 +145,9 @@ export default class SendableError<D extends SendableErrorDetails = EmptyObject>
                 error.message
               : JSON.stringify(error),
       });
-      sendableError.stack = undefined;
-
+      Object.defineProperty(sendableError, "stack", {
+        get: () => undefined,
+      });
       return sendableError;
     }
 
