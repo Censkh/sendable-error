@@ -1,6 +1,6 @@
 import SendableError from "../SendableError";
 
-test("public responses as expected", () => {
+it("1. public responses as expected", () => {
   const publicError = new SendableError({
     code: "public/error",
     message: "This is a public error",
@@ -13,7 +13,7 @@ test("public responses as expected", () => {
   });
 });
 
-test("public by default works as expected", () => {
+it("2. public by default works as expected", () => {
   const publicError = new SendableError({
     code: "public/error",
     message: "This is a public error",
@@ -79,5 +79,22 @@ test("public by default works as expected", () => {
   ).toMatchObject({
     code: "misc/internal-error",
     message: "hello",
+  });
+});
+
+it("public message", () => {
+  const error = new SendableError({
+    code: "test/private-code",
+    message: "This is a private error",
+    public: {
+      enabled: true,
+      message: "This is a public error",
+      code: "test/public-code",
+    },
+  });
+
+  expect(SendableError.of(error).toResponse()).toMatchObject({
+    code: "test/public-code",
+    message: "This is a public error",
   });
 });

@@ -1,3 +1,7 @@
+# 0.5.0
+
+- allow public to override message & code
+
 # 0.4.1
 
 ## Fixes

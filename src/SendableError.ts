@@ -61,21 +61,47 @@ const resolveCode = (code?: ErrorCode | string): ErrorCode => {
   return ErrorCode.DEFAULT_CODE;
 };
 
+const resolvePublic = (publicOptions?: boolean | PublicOptions): PublicProperties | undefined => {
+  if (publicOptions === undefined) {
+    return undefined;
+  }
+
+  if (typeof publicOptions === "boolean") {
+    return { enabled: publicOptions };
+  }
+
+  return {
+    ...publicOptions,
+    code: publicOptions?.code ? resolveCode(publicOptions.code) : undefined,
+  };
+};
+
 export type SendableErrorDetails = Record<string, any>;
+
+export interface PublicProperties {
+  enabled: boolean;
+  code?: ErrorCode;
+  message?: string;
+}
+
+type PublicOptions = Omit<PublicProperties, "code"> & {
+  code?: ErrorCode | string;
+};
 
 export interface SendableErrorProperties<D extends SendableErrorDetails = EmptyObject> {
   code: ErrorCode;
   message: string;
-  public?: boolean;
+  public?: PublicProperties;
   details?: D & Record<string, any>;
   cause?: unknown;
   status?: number;
 }
 
 export interface SendableErrorOptions<D extends SendableErrorDetails = EmptyObject>
-  extends Omit<SendableErrorProperties<D>, "code" | "message"> {
+  extends Omit<SendableErrorProperties<D>, "code" | "message" | "public"> {
   code?: ErrorCode | string;
   message?: string;
+  public?: boolean | PublicOptions;
 }
 
 export interface SendableErrorState {
@@ -84,7 +110,7 @@ export interface SendableErrorState {
 }
 
 export interface ToResponseOptions {
-  public?: boolean;
+  public?: boolean | PublicProperties;
   details?: SendableErrorDetails;
 }
 
@@ -176,6 +202,12 @@ export default class SendableError<D extends SendableErrorDetails = EmptyObject>
   }
 
   private init(options?: Partial<SendableErrorOptions<D>>) {
+    let resolvedPublic: PublicProperties | undefined;
+
+    if (typeof options?.public !== "undefined") {
+      resolvedPublic = resolvePublic(options.public);
+    }
+
     if (!this.properties) {
       const code = resolveCode(options?.code);
       let message = options?.message;
@@ -183,9 +215,12 @@ export default class SendableError<D extends SendableErrorDetails = EmptyObject>
         message = code.getDefaultMessage();
       }
 
-      this.properties = { ...DEFAULT_PROPERTIES, ...options, message: message!, code };
+      this.properties = { ...DEFAULT_PROPERTIES, ...options, public: resolvedPublic, message: message!, code };
     } else {
       Object.assign(this.properties, options);
+      if (resolvedPublic !== undefined) {
+        this.properties.public = resolvedPublic;
+      }
     }
 
     this.state = {
@@ -216,7 +251,7 @@ export default class SendableError<D extends SendableErrorDetails = EmptyObject>
   }
 
   isPublic(): boolean {
-    return Boolean(this.properties.public);
+    return Boolean(this.properties.public?.enabled);
   }
 
   /*get computedOptions(): Required<ErrorOptions> {
@@ -228,14 +263,15 @@ export default class SendableError<D extends SendableErrorDetails = EmptyObject>
   }*/
 
   toResponse(options?: ToResponseOptions): ErrorResponseBody {
-    const responsePublic = typeof options?.public === "boolean" ? options.public : this.isPublic();
+    const responsePublic = resolvePublic(options?.public) ?? this.properties.public;
+    const isPublic = responsePublic?.enabled;
 
     return {
-      code: responsePublic ? this.getCode().getId() : ErrorCode.DEFAULT_CODE.getId(),
-      message: responsePublic ? this.message : ErrorCode.DEFAULT_CODE.getDefaultMessage()!,
+      code: isPublic ? (responsePublic?.code ?? this.getCode()).getId() : ErrorCode.DEFAULT_CODE.getId(),
+      message: isPublic ? responsePublic?.message ?? this.message : ErrorCode.DEFAULT_CODE.getDefaultMessage()!,
       traceId: this.state.traceId,
       details: {
-        ...(responsePublic && this.properties.details),
+        ...(isPublic && this.properties.details),
         ...options?.details,
       },
     };
