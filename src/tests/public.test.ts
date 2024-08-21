@@ -82,7 +82,7 @@ it("2. public by default works as expected", () => {
   });
 });
 
-it("public message", () => {
+it("3. public message", () => {
   const error = new SendableError({
     code: "test/private-code",
     message: "This is a private error",
@@ -96,5 +96,13 @@ it("public message", () => {
   expect(SendableError.of(error).toResponse()).toMatchObject({
     code: "test/public-code",
     message: "This is a public error",
+  });
+});
+
+it("4. of not working", () => {
+  const publicError = new SendableError({
+    code: "public/error",
+    message: "This is a public error",
+    public: true,
   });
 });

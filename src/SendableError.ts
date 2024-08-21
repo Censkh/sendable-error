@@ -120,7 +120,7 @@ const CONSTRUCTOR_MESSAGE = "__$$sendable-error-message__";
  * An error with a known cause that is sendable
  */
 export default class SendableError<D extends SendableErrorDetails = EmptyObject> extends Error {
-  private readonly [SENDABLE_ERROR_INSTANCE_SYMBOL] = true;
+  private [SENDABLE_ERROR_INSTANCE_SYMBOL] = true;
 
   private properties!: SendableErrorProperties<D>;
   private state!: SendableErrorState;
@@ -137,8 +137,8 @@ export default class SendableError<D extends SendableErrorDetails = EmptyObject>
 
     let resolvedOptions = options ?? {};
 
-    if (error instanceof SendableError) {
-      result = error;
+    if (isSendableError(error)) {
+      result = error as any;
       if (resolvedOptions?.code && !resolvedOptions?.message) {
         const code = resolveCode(resolvedOptions.code);
         resolvedOptions = {
@@ -232,6 +232,8 @@ export default class SendableError<D extends SendableErrorDetails = EmptyObject>
     this.overrideProperty("message", this.getMessage());
     this.overrideProperty("cause", this.getCause());
     this.overrideProperty("stack", this.getStack());
+
+    this[SENDABLE_ERROR_INSTANCE_SYMBOL] = true;
   }
 
   getStack(): string | undefined {

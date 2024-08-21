@@ -1,1 +1,1 @@
-export const SENDABLE_ERROR_INSTANCE_SYMBOL = Symbol("SendableError");
+export const SENDABLE_ERROR_INSTANCE_SYMBOL = "__isSendableError";
