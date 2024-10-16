@@ -1,3 +1,7 @@
+# 0.6.0
+
+- fix `publicByDefault` behavior
+
 # 0.5.0
 
 - allow public to override message & code

@@ -38,10 +38,10 @@ it("2. public by default works as expected", () => {
   expect(
     SendableError.of(nonPublicError, {
       publicByDefault: true,
-    }).toResponse(),
+    }).toResponse({}),
   ).toMatchObject({
-    code: "misc/internal-error",
-    message: "An internal error occurred",
+    code: "non-public/error",
+    message: "This is a non-public error",
   });
 
   const error = new Error("A bug");

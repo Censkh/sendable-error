@@ -95,6 +95,7 @@ export interface SendableErrorProperties<D extends SendableErrorDetails = EmptyO
   details?: D & Record<string, any>;
   cause?: unknown;
   status?: number;
+  publicByDefault?: boolean;
 }
 
 export interface SendableErrorOptions<D extends SendableErrorDetails = EmptyObject>
@@ -131,7 +132,7 @@ export default class SendableError<D extends SendableErrorDetails = EmptyObject>
 
   public static of<D extends SendableErrorDetails>(
     error: Error,
-    options?: Partial<SendableErrorOptions<D>> & { publicByDefault?: boolean },
+    options?: Partial<SendableErrorOptions<D>>,
   ): SendableError<D> {
     let result: SendableError<D>;
 
@@ -155,13 +156,12 @@ export default class SendableError<D extends SendableErrorDetails = EmptyObject>
         code: ErrorCode.DEFAULT_CODE,
         message: error.message,
         cause: error.cause as Error,
-        public: resolvedOptions.publicByDefault,
         ...resolvedOptions,
       };
     } else {
       // bad input
       const sendableError = new SendableError<D>({
-        public: resolvedOptions.publicByDefault,
+        ...resolvedOptions,
         message:
           typeof error === "string"
             ? error
@@ -265,7 +265,10 @@ export default class SendableError<D extends SendableErrorDetails = EmptyObject>
   }*/
 
   toResponse(options?: ToResponseOptions): ErrorResponseBody {
-    const responsePublic = resolvePublic(options?.public) ?? this.properties.public;
+    const responsePublic =
+      resolvePublic(options?.public) ??
+      this.properties.public ??
+      (this.properties.publicByDefault ? { enabled: true } : undefined);
     const isPublic = responsePublic?.enabled;
 
     return {
