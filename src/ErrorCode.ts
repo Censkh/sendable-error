@@ -1,6 +1,5 @@
 import type SendableError from "./SendableError";
-import type { SendableErrorDetails } from "./SendableError";
-import type { EmptyObject } from "./Types";
+import type { DefaultSendableErrorDetails, SendableErrorDetails } from "./SendableError";
 import { isSendableError } from "./Utils";
 
 export interface ErrorCodeProperties {
@@ -9,7 +8,7 @@ export interface ErrorCodeProperties {
   status?: number;
 }
 
-export default class ErrorCode<D extends SendableErrorDetails = EmptyObject> {
+export default class ErrorCode<D extends SendableErrorDetails = DefaultSendableErrorDetails> {
   static DEFAULT_CODE = new ErrorCode({
     id: "misc/internal-error",
     defaultMessage: "An internal error occurred",

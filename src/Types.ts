@@ -1,5 +1,3 @@
-export type EmptyObject = Record<string, never>;
-
 export type Severity = "debug" | "info" | "warn" | "error";
 
 export interface ResponseWithError {

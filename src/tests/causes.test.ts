@@ -20,5 +20,6 @@ test("cause is added", () => {
   });
 
   expect(wrapped.getCause()?.message).toBe("A bug");
+  expect(wrapped.cause?.message).toBe("A bug");
   expect(isSendableError(wrapped)).toBe(true);
 });

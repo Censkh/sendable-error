@@ -1,7 +1,7 @@
 import { SENDABLE_ERROR_INSTANCE_SYMBOL } from "./Consts";
 import ErrorCode from "./ErrorCode";
 import { getErrorLogger } from "./Logging";
-import type { EmptyObject, ErrorResponseBody, ResponseWithError } from "./Types";
+import type { ErrorResponseBody, ResponseWithError } from "./Types";
 import { isSendableError } from "./Utils";
 import sha1 from "./vendor/sha1";
 
@@ -88,7 +88,9 @@ type PublicOptions = Omit<PublicProperties, "code"> & {
   code?: ErrorCode | string;
 };
 
-export interface SendableErrorProperties<D extends SendableErrorDetails = EmptyObject> {
+export type DefaultSendableErrorDetails = Record<string, never>;
+
+export interface SendableErrorProperties<D extends SendableErrorDetails = DefaultSendableErrorDetails> {
   code: ErrorCode;
   message: string;
   public?: PublicProperties;
@@ -98,7 +100,7 @@ export interface SendableErrorProperties<D extends SendableErrorDetails = EmptyO
   publicByDefault?: boolean;
 }
 
-export interface SendableErrorOptions<D extends SendableErrorDetails = EmptyObject>
+export interface SendableErrorOptions<D extends SendableErrorDetails = DefaultSendableErrorDetails>
   extends Omit<SendableErrorProperties<D>, "code" | "message" | "public"> {
   code?: ErrorCode | string;
   message?: string;
@@ -120,7 +122,7 @@ const CONSTRUCTOR_MESSAGE = "__$$sendable-error-message__";
 /**
  * An error with a known cause that is sendable
  */
-export default class SendableError<D extends SendableErrorDetails = EmptyObject> extends Error {
+export default class SendableError<D extends SendableErrorDetails = DefaultSendableErrorDetails> extends Error {
   private [SENDABLE_ERROR_INSTANCE_SYMBOL] = true;
 
   private properties!: SendableErrorProperties<D>;
@@ -192,7 +194,10 @@ export default class SendableError<D extends SendableErrorDetails = EmptyObject>
     const descriptor = Object.getOwnPropertyDescriptor(this, name);
 
     if (descriptor?.configurable === false) {
-      // cannot update
+      try {
+        // @ts-ignore
+        this[name] = value;
+      } catch {}
     } else {
       Object.defineProperty(this, name, {
         value: value,
