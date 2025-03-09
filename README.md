@@ -2,10 +2,6 @@
 
 Composable errors to simplify creating useful failure responses for APIs
 
-``` npm i sendable-error ```
-
-**Note:** this package is in early development, use with caution
-
 `SendableErrors` provide built-in support for:
 - An easy to use builder interface to construct errors
 - A unified way to send your errors as a JSON response
@@ -48,6 +44,9 @@ Response with status code `400¦:
 
 ## Getting Started
 
+```bash
+npm i sendable-error
+```
 
 ### Throwing Errors
 
