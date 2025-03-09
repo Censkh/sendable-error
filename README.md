@@ -29,7 +29,7 @@ try {
 }
 ```
 
-Response with status code `400¦:
+Response with status code `400`:
 
 ```json
 {
