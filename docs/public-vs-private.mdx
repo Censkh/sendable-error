@@ -1,0 +1,36 @@
+---
+title: Public vs Private Errors
+---
+
+By default all `SendableError`s are private. This means that the actual error message is not sent to the client and instead a generic error message is sent. This is to prevent leaking sensitive information to the client.
+
+You can override this behavior by setting the `public` property to `true` when creating the error. This will send the actual error message to the client.
+
+```typescript
+import { SendableError } from "sendable-error";
+
+throw new SendableError({
+  status: 403,
+  code: "auth/permission-denied",
+  message: "You do not have permission to access this resource",
+  public: true,
+});
+```
+
+## Public by Default
+
+If you want all errors to be public by default you specify this when constructing the response body:
+
+```typescript
+import { SendableError } from "sendable-error";
+
+const handler = (req, res) => {
+  try {
+    // do something
+  } catch (error) {
+    // response will be public unless otherwise specified
+    SendableError.of(error).send(res, { defaultPublic: true });
+  }
+};
+```
+

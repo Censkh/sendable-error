@@ -1,0 +1,43 @@
+---
+title: Error Codes
+---
+
+Error codes are a way to standardize error messages across your API. This can be useful for debugging and for providing more information to the client about what went wrong.
+
+You can provide an error code as either just a `string` ID or as a `ErrorCode` object that can contain default options for the error with that code.
+
+## Creating an Error Code
+
+Create an error code that has a default message and status code:
+
+```typescript
+import { ErrorCode, SendableError } from "sendable-error";
+
+const CODE_MISSING_REQUIRED = new ErrorCode({
+  code: "validation/missing-required",
+  defaultMessage: "Missing required field",
+  status: 400,
+});
+
+throw new SendableError({
+  code: CODE_MISSING_REQUIRED,
+  details: {
+    field: "id",
+  },
+});
+```
+
+## Using a String ID
+
+You can also use a string ID for the error code:
+
+```typescript
+throw new SendableError({
+  code: "validation/missing-required",
+  message: "Missing required field",
+  status: 400,
+  details: {
+    field: "id",
+  },
+});
+```

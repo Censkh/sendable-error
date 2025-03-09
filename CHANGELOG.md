@@ -1,3 +1,9 @@
+# 0.7.0
+
+- rename `toResponse` to `toResponseBody`
+- add `toResponse` that returns a `Response` object
+- add `logIfUnlogged` to `SendableError`
+
 # 0.6.0
 
 - fix `publicByDefault` behavior

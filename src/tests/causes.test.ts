@@ -2,7 +2,7 @@ import ErrorCode from "../ErrorCode";
 import SendableError from "../SendableError";
 import { isSendableError } from "../Utils";
 
-test("cause is added", () => {
+it("cause is added", () => {
   const root = new SendableError({
     message: "A bug",
     code: ErrorCode.DEFAULT_CODE,

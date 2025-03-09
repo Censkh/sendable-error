@@ -14,30 +14,26 @@ Composable errors to simplify creating useful failure responses for APIs
 - Trace IDs allow you to identify specific errors and allows user's to point you in the right direction when they encounter a bug
 - A customizable logger interface
 
-## Getting Started
-
-Creating a new error from scratch:
 
 ```js
-import {SendableError, ErrorCode} from "sendable-error";
+import { SendableError } from "sendable-error";
 
-const CODE_MISSING_REQUIRED = new ErrorCode({id: "validation/missing-required", defaultMessage: "Missing required field");
-
-export const updateUser = (req, res) => {
-    if (!req.body.id) {
-        return new SendableError({
-          code: CODE_MISSING_REQUIRED,
-          message: "Missing required field 'id'",
-          details: {
-            field: "id"
-          }
-        })
-          .send(res);
+try {
+  throw new SendableError({
+    status: 400,
+    code: "validation/missing-required",
+    message: "Missing required field 'id'",
+    public: true,
+    details: {
+      field: "id"
     }
-};
+  })
+} catch (error) {
+  return SendableError.of(error).toResponse();
+}
 ```
 
-In this example if you miss the ID field from the body you shall receive a 400 status code error with the body:
+Response with status code `400¦:
 
 ```json
 {
@@ -47,5 +43,73 @@ In this example if you miss the ID field from the body you shall receive a 400 s
   "details": {
     "field": "id"
   }
+}
+```
+
+## Getting Started
+
+
+### Throwing Errors
+
+Creating a new error from scratch:
+
+```js
+ throw new SendableError({
+  code: CODE_MISSING_REQUIRED,
+  message: "Missing required field 'id'",
+  public: true,
+  details: {
+    field: "id",
+  },
+});
+```
+
+Or provide a cause for the error:
+
+```js
+throw new SendableError({
+  code: CODE_DATABASE_ERROR,
+  cause: error,
+});
+```
+
+Or even transform an error from elsewhere into a `SendableError`:
+
+```js
+throw SendableError.of(error, {
+  code: CODE_DATABASE_ERROR
+});
+```
+
+### Sending Errors
+
+#### Express
+
+```js
+app.use((error, req, res, next) => {
+  SendableError.of(error).send(res);
+});
+```
+
+#### WinterTC Compatible
+
+```typescript
+export const handler = async (request: Request) => {
+  try {
+    // do something that might throw
+  } catch (error) {
+    return SendableError.of(error).toResponse();
+  }
+}
+```
+
+#### Others
+
+```typescript
+try {
+  // do something that might throw
+} catch (error) {
+  const responseBody = SendableError.of(error).toResponseBody();
+  /* send responseBody */
 }
 ```

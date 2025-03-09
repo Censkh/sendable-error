@@ -5,6 +5,12 @@ import type { ErrorResponseBody, ResponseWithError } from "./Types";
 import { isSendableError } from "./Utils";
 import sha1 from "./vendor/sha1";
 
+export interface LogOptions {
+  message?: string;
+  source?: string;
+  info?: any;
+}
+
 const DEFAULT_STATUS = 500;
 
 const byteToHex: string[] = [];
@@ -91,18 +97,17 @@ type PublicOptions = Omit<PublicProperties, "code"> & {
 export type DefaultSendableErrorDetails = Record<string, never>;
 
 export interface SendableErrorProperties<D extends SendableErrorDetails = DefaultSendableErrorDetails> {
-  code: ErrorCode;
+  code: ErrorCode<D>;
   message: string;
   public?: PublicProperties;
   details?: D & Record<string, any>;
   cause?: unknown;
   status?: number;
-  publicByDefault?: boolean;
 }
 
 export interface SendableErrorOptions<D extends SendableErrorDetails = DefaultSendableErrorDetails>
   extends Omit<SendableErrorProperties<D>, "code" | "message" | "public"> {
-  code?: ErrorCode | string;
+  code?: ErrorCode<D> | string;
   message?: string;
   public?: boolean | PublicOptions;
 }
@@ -112,7 +117,8 @@ export interface SendableErrorState {
   traceId: string;
 }
 
-export interface ToResponseOptions {
+export interface ToResponseBodyOptions {
+  defaultPublic?: boolean | PublicProperties;
   public?: boolean | PublicProperties;
   details?: SendableErrorDetails;
 }
@@ -269,11 +275,15 @@ export default class SendableError<D extends SendableErrorDetails = DefaultSenda
     };
   }*/
 
-  toResponse(options?: ToResponseOptions): ErrorResponseBody {
+  toResponse(options?: ToResponseBodyOptions): Response {
+    return Response.json(this.toResponseBody(options), {
+      status: this.getStatus(),
+    });
+  }
+
+  toResponseBody(options?: ToResponseBodyOptions): ErrorResponseBody {
     const responsePublic =
-      resolvePublic(options?.public) ??
-      this.properties.public ??
-      (this.properties.publicByDefault ? { enabled: true } : undefined);
+      resolvePublic(options?.public) ?? this.properties.public ?? resolvePublic(options?.defaultPublic);
     const isPublic = responsePublic?.enabled;
 
     return {
@@ -306,11 +316,9 @@ export default class SendableError<D extends SendableErrorDetails = DefaultSenda
   /**
    * Sends the error (if a response wasn't already sent) & logs if it wasn't already logged
    */
-  send(res: ResponseWithError): this {
+  send(res: ResponseWithError, options?: ToResponseBodyOptions): this {
     // Make sure errors aren't swallowed
-    if (!this.state.logged) {
-      this.log("SendableError");
-    }
+    this.logIfUnlogged();
 
     res.cause = this;
 
@@ -318,24 +326,30 @@ export default class SendableError<D extends SendableErrorDetails = DefaultSenda
       if (typeof res.status === "function") {
         res.status(this.getStatus());
       }
-      res.send(this.toResponse());
+      res.send(this.toResponseBody(options));
     }
     return this;
+  }
+
+  logIfUnlogged(options?: LogOptions) {
+    if (!this.state.logged) {
+      this.log(options);
+    }
   }
 
   /**
    * Log out info on error
    */
-  log(source: string, message?: string, info?: any) {
+  log(options?: LogOptions) {
     this.state.logged = true;
     /**const computedOptions = {
      ...this.computedOptions,
      ...(options || {}),
      };**/
     const traceId = this.getTraceId();
-    const loggedMessage = message || this.getMessage();
+    const loggedMessage = options?.message || this.getMessage();
 
-    const providedInfo = Object.assign({}, this.properties.details, info);
+    const providedInfo = Object.assign({}, this.properties.details, options?.info);
     const errorInfo: any = {
       traceId: traceId,
       code: this.getCode().getId(),
@@ -345,7 +359,6 @@ export default class SendableError<D extends SendableErrorDetails = DefaultSenda
 
     getErrorLogger()({
       //options     : computedOptions,
-      source: source,
       message: loggedMessage,
       error: this as any,
       info: computedInfo,

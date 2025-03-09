@@ -7,7 +7,7 @@ it("1. public responses as expected", () => {
     public: true,
   });
 
-  expect(SendableError.of(publicError).toResponse()).toMatchObject({
+  expect(SendableError.of(publicError).toResponseBody()).toMatchObject({
     code: "public/error",
     message: "This is a public error",
   });
@@ -20,12 +20,12 @@ it("2. public by default works as expected", () => {
     public: true,
   });
 
-  expect(SendableError.of(publicError).toResponse()).toMatchObject({
+  expect(SendableError.of(publicError).toResponseBody()).toMatchObject({
     code: "public/error",
     message: "This is a public error",
   });
 
-  expect(SendableError.of(publicError).toResponse({ public: false })).toMatchObject({
+  expect(SendableError.of(publicError).toResponseBody({ public: false })).toMatchObject({
     code: "misc/internal-error",
     message: "An internal error occurred",
   });
@@ -36,9 +36,9 @@ it("2. public by default works as expected", () => {
   });
 
   expect(
-    SendableError.of(nonPublicError, {
-      publicByDefault: true,
-    }).toResponse({}),
+    SendableError.of(nonPublicError).toResponseBody({
+      defaultPublic: true,
+    }),
   ).toMatchObject({
     code: "non-public/error",
     message: "This is a non-public error",
@@ -46,39 +46,51 @@ it("2. public by default works as expected", () => {
 
   const error = new Error("A bug");
   expect(
-    SendableError.of(error, {
-      publicByDefault: true,
-    }).toResponse(),
+    SendableError.of(error).toResponseBody({
+      defaultPublic: true,
+    }),
   ).toMatchObject({
     code: "misc/internal-error",
     message: "A bug",
   });
 
   expect(
-    SendableError.of(error, {
-      publicByDefault: false,
-    }).toResponse(),
+    SendableError.of(error).toResponseBody({
+      defaultPublic: false,
+    }),
   ).toMatchObject({
     code: "misc/internal-error",
     message: "An internal error occurred",
   });
 
   expect(
-    SendableError.of("hello" as any, {
-      publicByDefault: true,
-    }).toResponse(),
+    SendableError.of("hello" as any).toResponseBody({
+      defaultPublic: true,
+    }),
   ).toMatchObject({
     code: "misc/internal-error",
     message: "hello",
   });
 
   expect(
-    SendableError.of({ message: "hello" } as any, {
-      publicByDefault: true,
-    }).toResponse(),
+    SendableError.of({ message: "hello" } as any).toResponseBody({
+      defaultPublic: true,
+    }),
   ).toMatchObject({
     code: "misc/internal-error",
     message: "hello",
+  });
+
+  expect(
+    new SendableError({
+      message: "Set to private",
+      public: false,
+    }).toResponseBody({
+      defaultPublic: true,
+    }),
+  ).toMatchObject({
+    code: "misc/internal-error",
+    message: "An internal error occurred",
   });
 });
 
@@ -93,7 +105,7 @@ it("3. public message", () => {
     },
   });
 
-  expect(SendableError.of(error).toResponse()).toMatchObject({
+  expect(SendableError.of(error).toResponseBody()).toMatchObject({
     code: "test/public-code",
     message: "This is a public error",
   });
