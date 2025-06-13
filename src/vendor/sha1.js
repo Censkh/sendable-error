@@ -41,8 +41,10 @@
   };
 
   const nodeWrap = (method) => {
-    const crypto = require("node:crypto");
-    const Buffer = require("node:buffer").Buffer;
+    // biome-ignore lint/style/useNodejsImportProtocol: not supported in all environments
+    const crypto = require("crypto");
+    // biome-ignore lint/style/useNodejsImportProtocol: not supported in all environments
+    const Buffer = require("buffer").Buffer;
     const nodeMethod = (message) => {
       if (typeof message === "string") {
         return crypto.createHash("sha1").update(message, "utf8").digest("hex");

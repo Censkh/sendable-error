@@ -1,3 +1,7 @@
+# 0.7.2
+
+- add `cause` to responses returned by `toResponse`
+
 # 0.7.0
 
 - rename `toResponse` to `toResponseBody`

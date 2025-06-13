@@ -11,6 +11,10 @@ export interface LogOptions {
   info?: any;
 }
 
+export interface ErrorResponse extends Response {
+  cause?: SendableError | Error;
+}
+
 const DEFAULT_STATUS = 500;
 
 const byteToHex: string[] = [];
@@ -275,10 +279,12 @@ export default class SendableError<D extends SendableErrorDetails = DefaultSenda
     };
   }*/
 
-  toResponse(options?: ToResponseBodyOptions): Response {
-    return Response.json(this.toResponseBody(options), {
+  toResponse(options?: ToResponseBodyOptions): ErrorResponse {
+    const response: ErrorResponse = Response.json(this.toResponseBody(options), {
       status: this.getStatus(),
     });
+    response.cause = this;
+    return response;
   }
 
   toResponseBody(options?: ToResponseBodyOptions): ErrorResponseBody {
