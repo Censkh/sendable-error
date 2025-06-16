@@ -138,7 +138,7 @@ export default class SendableError<D extends SendableErrorDetails = DefaultSenda
   private properties!: SendableErrorProperties<D>;
   private state!: SendableErrorState;
 
-  public static is(error: Error): error is SendableError {
+  public static is(error: any): error is SendableError {
     return isSendableError(error);
   }
 
