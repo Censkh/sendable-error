@@ -3,7 +3,6 @@ import ErrorCode from "./ErrorCode";
 import { getErrorLogger } from "./Logging";
 import type { ErrorResponseBody, ResponseWithError } from "./Types";
 import { isSendableError } from "./Utils";
-import sha1 from "./vendor/sha1";
 
 export interface LogOptions {
   message?: string;
@@ -17,42 +16,59 @@ export interface ErrorResponse extends Response {
 
 const DEFAULT_STATUS = 500;
 
-const byteToHex: string[] = [];
-
-for (let i = 0; i < 256; ++i) {
-  byteToHex.push((i + 0x100).toString(16).substr(1));
-}
-
-function stringify(arr: any, offset = 0) {
-  // Note: Be careful editing this code!  It's been tuned for performance
-  // and works in ways you may not expect. See https://github.com/uuidjs/uuid/pull/434
-  const uuid = `${
-    byteToHex[arr[offset + 0]] + byteToHex[arr[offset + 1]] + byteToHex[arr[offset + 2]] + byteToHex[arr[offset + 3]]
-  }-${byteToHex[arr[offset + 4]]}${byteToHex[arr[offset + 5]]}-${byteToHex[arr[offset + 6]]}${
-    byteToHex[arr[offset + 7]]
-  }-${byteToHex[arr[offset + 8]]}${byteToHex[arr[offset + 9]]}-${byteToHex[arr[offset + 10]]}${
-    byteToHex[arr[offset + 11]]
-  }${byteToHex[arr[offset + 12]]}${byteToHex[arr[offset + 13]]}${byteToHex[arr[offset + 14]]}${
-    byteToHex[arr[offset + 15]]
-  }`.toLowerCase(); // Consistency check for valid UUID.  If this throws, it's likely due to one
-  // of the following:
-  // - One or more input array values don't map to a hex octet (leading to
-  // "undefined" in the uuid)
-  // - Invalid input values for the RFC `version` or `variant` fields
-
-  return uuid;
-}
-
 /**
  * Transforms an error into a deterministic error identifier to enable easy log searching
  */
 export const getTraceId = (error: Error): string => {
   const errorString = error.stack || error.toString();
 
-  // @ts-ignore
-  const sha = sha1.create();
-  sha.update(errorString);
-  return stringify(sha.array());
+  // Extract meaningful parts from the stack trace for more deterministic hashing
+  const lines = errorString.split("\n");
+  const meaningfulLines = lines
+    .filter((line) => line.trim().length > 0)
+    .map((line) => {
+      // Remove common prefixes and focus on the meaningful parts
+      return line
+        .replace(/^\s*at\s+/, "") // Remove "at " prefix
+        .replace(/^\s*/, "") // Remove leading whitespace
+        .split(" ")[0]; // Take only the function/file part
+    })
+    .filter((line) => line.length > 0)
+    .slice(0, 20); // Use 20 lines for better entropy
+
+  // Create a deterministic string from the meaningful parts
+  const deterministicString = meaningfulLines.join("|") + (error.message || "");
+
+  // Generate a seed from the deterministic string
+  let seed = 0;
+  for (const char of deterministicString) {
+    seed = (seed * 31 + char.charCodeAt(0)) % 0x100000000;
+  }
+
+  // Generate a deterministic UUID v4-like string using the seed
+  const generateSeededUUID = (seed: number): string => {
+    // Create a simple seeded random number generator
+    const seededRandom = () => {
+      const resolvedSeed = (seed * 9301 + 49297) % 233280;
+      return resolvedSeed / 233280;
+    };
+
+    // Generate 16 random bytes
+    const bytes = new Array(16);
+    for (let i = 0; i < 16; i++) {
+      bytes[i] = Math.floor(seededRandom() * 256);
+    }
+
+    // Set version (4) and variant bits
+    bytes[6] = (bytes[6] & 0x0f) | 0x40; // Version 4
+    bytes[8] = (bytes[8] & 0x3f) | 0x80; // Variant
+
+    // Convert to hex string with UUID format
+    const hex = bytes.map((b) => b.toString(16).padStart(2, "0")).join("");
+    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`;
+  };
+
+  return generateSeededUUID(seed);
 };
 
 const DEFAULT_PROPERTIES: Partial<SendableErrorProperties<any>> = {

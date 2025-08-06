@@ -1,3 +1,7 @@
+# 0.8.0
+
+- make the trace ID generation simpler to reduce bundle size
+
 # 0.7.2
 
 - add `cause` to responses returned by `toResponse`
