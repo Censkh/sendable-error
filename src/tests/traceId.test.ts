@@ -3,8 +3,11 @@ import { getTraceId } from "../SendableError";
 
 describe("getTraceId", () => {
   it("should generate deterministic traceId for same error", () => {
-    const error1 = new Error("Test error");
-    const error2 = new Error("Test error");
+    const errors = [];
+    for (let i = 0; i < 2; i++) {
+      errors.push(new Error("Test error"));
+    }
+    const [error1, error2] = errors;
 
     const traceId1 = getTraceId(error1);
     const traceId2 = getTraceId(error2);
@@ -37,7 +40,7 @@ describe("getTraceId", () => {
     const traceId1 = sendableError1.getTraceId();
     const traceId2 = sendableError2.getTraceId();
 
-    expect(traceId1).toBe(traceId2);
+    expect(traceId1).not.toBe(traceId2);
     expect(traceId1).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
   });
 

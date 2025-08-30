@@ -16,59 +16,39 @@ export interface ErrorResponse extends Response {
 
 const DEFAULT_STATUS = 500;
 
+function hashString(str: string) {
+  // Simple FNV-1a 32-bit hash
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h += (h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24);
+  }
+  return h >>> 0; // ensure unsigned 32-bit
+}
+
 /**
  * Transforms an error into a deterministic error identifier to enable easy log searching
  */
 export const getTraceId = (error: Error): string => {
-  const errorString = error.stack || error.toString();
+  // Generate 16 bytes from seed
+  const bytes = new Array(16).fill(0).map((_, i) => {
+    const h = hashString(`${error.stack}${i}`);
+    return h & 0xff; // take lowest byte
+  });
 
-  // Extract meaningful parts from the stack trace for more deterministic hashing
-  const lines = errorString.split("\n");
-  const meaningfulLines = lines
-    .filter((line) => line.trim().length > 0)
-    .map((line) => {
-      // Remove common prefixes and focus on the meaningful parts
-      return line
-        .replace(/^\s*at\s+/, "") // Remove "at " prefix
-        .replace(/^\s*/, "") // Remove leading whitespace
-        .split(" ")[0]; // Take only the function/file part
+  // Set version (v4-like) and variant bits
+  bytes[6] = (bytes[6] & 0x0f) | 0x40; // version 4
+  bytes[8] = (bytes[8] & 0x3f) | 0x80; // RFC 4122 variant
+
+  // Convert bytes to UUID string
+  const uuid = [...bytes]
+    .map((b, i) => {
+      const s = b.toString(16).padStart(2, "0");
+      return [4, 6, 8, 10].includes(i) ? `-${s}` : s;
     })
-    .filter((line) => line.length > 0)
-    .slice(0, 20); // Use 20 lines for better entropy
+    .join("");
 
-  // Create a deterministic string from the meaningful parts
-  const deterministicString = meaningfulLines.join("|") + (error.message || "");
-
-  // Generate a seed from the deterministic string
-  let seed = 0;
-  for (const char of deterministicString) {
-    seed = (seed * 31 + char.charCodeAt(0)) % 0x100000000;
-  }
-
-  // Generate a deterministic UUID v4-like string using the seed
-  const generateSeededUUID = (seed: number): string => {
-    // Create a simple seeded random number generator
-    const seededRandom = () => {
-      const resolvedSeed = (seed * 9301 + 49297) % 233280;
-      return resolvedSeed / 233280;
-    };
-
-    // Generate 16 random bytes
-    const bytes = new Array(16);
-    for (let i = 0; i < 16; i++) {
-      bytes[i] = Math.floor(seededRandom() * 256);
-    }
-
-    // Set version (4) and variant bits
-    bytes[6] = (bytes[6] & 0x0f) | 0x40; // Version 4
-    bytes[8] = (bytes[8] & 0x3f) | 0x80; // Variant
-
-    // Convert to hex string with UUID format
-    const hex = bytes.map((b) => b.toString(16).padStart(2, "0")).join("");
-    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`;
-  };
-
-  return generateSeededUUID(seed);
+  return uuid;
 };
 
 const DEFAULT_PROPERTIES: Partial<SendableErrorProperties<any>> = {

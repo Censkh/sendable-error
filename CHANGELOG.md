@@ -1,3 +1,7 @@
+# 0.9.0
+
+- make the trace ID generator better again
+
 # 0.8.0
 
 - make the trace ID generation simpler to reduce bundle size

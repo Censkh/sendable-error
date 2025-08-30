@@ -1,6 +1,6 @@
 {
   "name": "sendable-error",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "main": "cjs/index.js",
   "types": "esm/index.d.ts",
   "module": "esm/index.js",
