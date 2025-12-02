@@ -8,7 +8,19 @@ export interface ErrorCodeProperties {
   status?: number;
 }
 
-export default class ErrorCode<D extends SendableErrorDetails = DefaultSendableErrorDetails> {
+export interface BaseErrorCode<D extends SendableErrorDetails = DefaultSendableErrorDetails> {
+  getId(): string;
+
+  getDefaultMessage(): string | undefined;
+
+  is(error: any): error is SendableError;
+
+  getStatus(): number | undefined;
+}
+
+export default class ErrorCode<D extends SendableErrorDetails = DefaultSendableErrorDetails>
+  implements BaseErrorCode<D>
+{
   static DEFAULT_CODE = new ErrorCode({
     id: "misc/internal-error",
     defaultMessage: "An internal error occurred",
@@ -65,7 +77,7 @@ export default class ErrorCode<D extends SendableErrorDetails = DefaultSendableE
     return code;
   }
 
-  static get(error: Error): ErrorCode {
+  static get(error: Error): BaseErrorCode {
     return isSendableError(error) ? error.getCode() : ErrorCode.DEFAULT_CODE;
   }
 

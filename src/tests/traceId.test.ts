@@ -93,7 +93,10 @@ describe("getTraceId", () => {
   });
 
   it("should handle errors with very long stack traces", () => {
-    const longStack = `Error: Long stack\n${Array.from({ length: 50 }, (_, i) => `    at function${i}.js:${i}:${i}`).join("\n")}`;
+    const longStack = `Error: Long stack\n${Array.from(
+      { length: 50 },
+      (_, i) => `    at function${i}.js:${i}:${i}`,
+    ).join("\n")}`;
 
     const error = new Error("Long stack error");
     error.stack = longStack;

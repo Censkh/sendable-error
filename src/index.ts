@@ -4,7 +4,7 @@ import ErrorCode from "./ErrorCode";
 export * from "./Logging";
 export * from "./Utils";
 
-export { default as ErrorCode, ErrorCodeProperties } from "./ErrorCode";
+export { default as ErrorCode, ErrorCodeProperties, BaseErrorCode } from "./ErrorCode";
 
 import { default as SendableError, getTraceId } from "./SendableError";
 

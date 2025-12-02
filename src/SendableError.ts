@@ -1,5 +1,5 @@
 import { SENDABLE_ERROR_INSTANCE_SYMBOL } from "./Consts";
-import ErrorCode from "./ErrorCode";
+import ErrorCode, { type BaseErrorCode } from "./ErrorCode";
 import { getErrorLogger } from "./Logging";
 import type { ErrorResponseBody, ResponseWithError } from "./Types";
 import { isSendableError } from "./Utils";
@@ -55,7 +55,7 @@ const DEFAULT_PROPERTIES: Partial<SendableErrorProperties<any>> = {
   code: ErrorCode.DEFAULT_CODE,
 };
 
-const resolveCode = (code?: ErrorCode | string): ErrorCode => {
+const resolveCode = (code?: BaseErrorCode | string): BaseErrorCode => {
   if (code instanceof ErrorCode) {
     return code;
   }
@@ -86,18 +86,18 @@ export type SendableErrorDetails = Record<string, any>;
 
 export interface PublicProperties {
   enabled: boolean;
-  code?: ErrorCode;
+  code?: BaseErrorCode;
   message?: string;
 }
 
 type PublicOptions = Omit<PublicProperties, "code"> & {
-  code?: ErrorCode | string;
+  code?: BaseErrorCode | string;
 };
 
-export type DefaultSendableErrorDetails = Record<string, never>;
+export type DefaultSendableErrorDetails = Record<string, unknown>;
 
 export interface SendableErrorProperties<D extends SendableErrorDetails = DefaultSendableErrorDetails> {
-  code: ErrorCode<D>;
+  code: BaseErrorCode<D>;
   message: string;
   public?: PublicProperties;
   details?: D & Record<string, any>;
@@ -107,7 +107,7 @@ export interface SendableErrorProperties<D extends SendableErrorDetails = Defaul
 
 export interface SendableErrorOptions<D extends SendableErrorDetails = DefaultSendableErrorDetails>
   extends Omit<SendableErrorProperties<D>, "code" | "message" | "public"> {
-  code?: ErrorCode<D> | string;
+  code?: BaseErrorCode<D> | string;
   message?: string;
   public?: boolean | PublicOptions;
 }
@@ -255,7 +255,7 @@ export default class SendableError<D extends SendableErrorDetails = DefaultSenda
     return this.properties.cause;
   }
 
-  getCode(): ErrorCode {
+  getCode(): BaseErrorCode {
     return this.properties.code || ErrorCode.DEFAULT_CODE;
   }
 

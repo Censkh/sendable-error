@@ -1,6 +1,6 @@
 {
   "name": "sendable-error",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "main": "cjs/index.js",
   "types": "esm/index.d.ts",
   "module": "esm/index.js",
@@ -12,7 +12,7 @@
     "prepublishOnly": "npm run check:fix && npm run test && npm run build",
     "example:start": "cd example && npm run start",
     "example:dev": "cd example && npm run dev",
-    "check:fix": "npx @biomejs/biome check --write src",
+    "check:fix": "npx @biomejs/biome check --apply src",
     "check": "npx @biomejs/biome check src",
     "cleanup": "rimraf esm && rimraf cjs",
     "build": "npm run cleanup && npm run build:esm && npm run build:cjs",
