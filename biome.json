@@ -1,6 +1,8 @@
 {
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
-  "organizeImports": { "enabled": true },
+  "files": {
+    "includes": ["**", "!bin", "!cjs", "!esm", "!cli/tests/fixtures"]
+  },
   "linter": {
     "enabled": true,
 
@@ -10,7 +12,8 @@
         "noDangerouslySetInnerHtml": "off"
       },
       "suspicious": {
-        "noExplicitAny": "off"
+        "noExplicitAny": "off",
+        "noPrototypeBuiltins": "off"
       },
       "style": {
         "noNonNullAssertion": "off"

@@ -201,7 +201,7 @@ export default class SendableError<D extends SendableErrorDetails = DefaultSenda
 
     if (descriptor?.configurable === false) {
       try {
-        // @ts-ignore
+        // @ts-expect-error
         this[name] = value;
       } catch {}
     } else {
@@ -290,7 +290,7 @@ export default class SendableError<D extends SendableErrorDetails = DefaultSenda
 
     return {
       code: isPublic ? (responsePublic?.code ?? this.getCode()).getId() : ErrorCode.DEFAULT_CODE.getId(),
-      message: isPublic ? responsePublic?.message ?? this.message : ErrorCode.DEFAULT_CODE.getDefaultMessage()!,
+      message: isPublic ? (responsePublic?.message ?? this.message) : ErrorCode.DEFAULT_CODE.getDefaultMessage()!,
       traceId: this.state.traceId,
       details: {
         ...(isPublic && this.properties.details),

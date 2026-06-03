@@ -1,15 +1,14 @@
 //export * from "./Types";
 import ErrorCode from "./ErrorCode";
 
+export { BaseErrorCode, default as ErrorCode, ErrorCodeProperties } from "./ErrorCode";
 export * from "./Logging";
 export * from "./Utils";
 
-export { default as ErrorCode, ErrorCodeProperties, BaseErrorCode } from "./ErrorCode";
-
-import { default as SendableError, getTraceId } from "./SendableError";
+import { getTraceId, default as SendableError } from "./SendableError";
 
 export const ERROR_CODE_MISC_INTERNAL_ERROR = ErrorCode.DEFAULT_CODE;
 
 export default SendableError;
 
-export { SendableError, getTraceId };
+export { getTraceId, SendableError };

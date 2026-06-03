@@ -112,7 +112,7 @@ it("3. public message", () => {
 });
 
 it("4. of not working", () => {
-  const publicError = new SendableError({
+  new SendableError({
     code: "public/error",
     message: "This is a public error",
     public: true,

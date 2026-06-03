@@ -1,5 +1,4 @@
-import SendableError from "../SendableError";
-import { getTraceId } from "../SendableError";
+import SendableError, { getTraceId } from "../SendableError";
 
 describe("getTraceId", () => {
   it("should generate deterministic traceId for same error", () => {

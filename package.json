@@ -1,6 +1,6 @@
 {
   "name": "sendable-error",
-  "version": "0.11.2",
+  "version": "0.11.3",
   "main": "cjs/index.js",
   "types": "esm/index.d.ts",
   "module": "esm/index.js",
@@ -11,16 +11,16 @@
   "scripts": {
     "test": "npm run test:unit && npm run test:types && npm run check",
     "test:unit": "bun test",
-    "test:types": "tsc --noEmit -p .",
+    "test:types": "tsgo --noEmit -p .",
     "prepublishOnly": "npm run check:fix && npm run test && npm run build",
     "example:start": "cd example && npm run start",
     "example:dev": "cd example && npm run dev",
-    "check:fix": "npx @biomejs/biome check --apply src",
-    "check": "npx @biomejs/biome check src",
+    "check:fix": "tsgo --noEmit --project tsconfig.json && npx @biomejs/biome check --write",
+    "check": "tsgo --noEmit --project tsconfig.json && npx @biomejs/biome check",
     "cleanup": "rimraf esm && rimraf cjs",
     "build": "npm run cleanup && npm run build:esm && npm run build:cjs",
-    "build:esm": "tsc --project tsconfig.esm.json --outDir esm && tsc-alias --project tsconfig.esm.json --outDir esm --resolve-full-paths --resolve-full-extension .js",
-    "build:cjs": "tsc --project tsconfig.cjs.json --outDir cjs",
+    "build:esm": "tsgo --project tsconfig.esm.json --outDir esm && tsc-alias --project tsconfig.esm.json --outDir esm --resolve-full-paths --resolve-full-extension .js",
+    "build:cjs": "tsgo --project tsconfig.cjs.json --outDir cjs",
     "build:watch": "npm run cleanup && npm-run-all -p \"build:esm -- -w\" \"build:cjs -- -w\""
   },
   "exports": {
@@ -33,16 +33,17 @@
     "./cjs": "./cjs/index.js"
   },
   "devDependencies": {
-    "@biomejs/biome": "latest",
-    "@swc/core": "latest",
-    "@swc/jest": "latest",
-    "@types/jest": "^29.5.14",
-    "@types/node": "^22.13.10",
-    "jest": "latest",
+    "@biomejs/biome": "^2.4.16",
+    "@swc/core": "1.15.40",
+    "@swc/jest": "0.2.39",
+    "@types/jest": "^30.0.0",
+    "@typescript/native-preview": "latest",
+    "@types/node": "^25.9.1",
+    "jest": "30.4.2",
     "npm-run-all": "^4.1.5",
-    "rimraf": "^6.0.1",
+    "rimraf": "^6.1.3",
     "tsc-alias": "^1.8.16",
-    "typescript": "^5.8.2"
+    "typescript": "^6.0.3"
   },
   "files": [
     "LICENSE",

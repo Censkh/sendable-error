@@ -8,7 +8,7 @@ it("logging", () => {
   });
 
   setErrorLogger((options) => {
-    const { message, error, info } = options;
+    const { message } = options;
     expect(message).toBe("A bug");
   });
 

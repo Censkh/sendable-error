@@ -3,7 +3,7 @@ import { setErrorLogger } from "../Logging";
 import SendableError from "../SendableError";
 import { isSendableError } from "../Utils";
 
-setErrorLogger((options) => {});
+setErrorLogger(() => {});
 
 it("getting codes works", async () => {
   const code = new ErrorCode({
@@ -167,14 +167,14 @@ it("overriding unconfigurable properties", () => {
 it("sendables get all relevant properties", () => {
   const cause = new Error("Cause");
 
-  // @ts-ignore
+  // @ts-expect-error
   const error = new Error("Test", {
     cause,
   });
   const sendable = SendableError.of(error);
   expect(sendable.stack).toBe(error.stack);
   expect(sendable.message).toBe(error.message);
-  // @ts-ignore
+  // @ts-expect-error
   expect(sendable.getCause()).toBe(error.cause);
 
   expect(Object.getPrototypeOf(sendable)).toBe(SendableError.prototype);

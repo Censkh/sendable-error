@@ -8,7 +8,7 @@ export interface ErrorCodeProperties {
   status?: number;
 }
 
-export interface BaseErrorCode<D extends SendableErrorDetails = DefaultSendableErrorDetails> {
+export interface BaseErrorCode<_D extends SendableErrorDetails = DefaultSendableErrorDetails> {
   getId(): string;
 
   getDefaultMessage(): string | undefined;

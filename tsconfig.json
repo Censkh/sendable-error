@@ -1,11 +1,8 @@
 {
   "compilerOptions": {
-    "lib": [
-      "ES6",
-      "ESNext"
-    ],
-    "moduleResolution": "node",
+    "lib": ["ES6", "ESNext", "DOM"],
     "module": "ES2015",
+    "rootDir": "src",
     "target": "ES2023",
     "strict": true,
     "esModuleInterop": true,
@@ -15,10 +12,6 @@
     "allowJs": true,
     "skipLibCheck": true
   },
-  "include": [
-    "src"
-  ],
-  "exclude": [
-    "src/tests"
-  ]
+  "include": ["src"],
+  "exclude": ["src/tests"]
 }
