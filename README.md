@@ -44,6 +44,8 @@ Response with status code `400`:
 
 ## Getting Started
 
+Requires Node.js 22 or newer.
+
 ```bash
 npm i sendable-error
 ```

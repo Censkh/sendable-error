@@ -1,3 +1,9 @@
+# 0.11.1
+
+## Breaking Changes
+
+- require Node.js 22 or newer
+
 # 0.9.0
 
 - make the trace ID generator better again

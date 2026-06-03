@@ -1,10 +1,14 @@
 {
   "name": "sendable-error",
-  "version": "0.10.0",
+  "version": "0.11.1",
   "main": "cjs/index.js",
   "types": "esm/index.d.ts",
   "module": "esm/index.js",
+  "type": "module",
   "sideEffects": false,
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "test": "npm run test:unit && npm run test:types && npm run check",
     "test:unit": "bun test",
@@ -16,8 +20,8 @@
     "check": "npx @biomejs/biome check src",
     "cleanup": "rimraf esm && rimraf cjs",
     "build": "npm run cleanup && npm run build:esm && npm run build:cjs",
-    "build:esm": "tsc --module es2015 --outDir esm",
-    "build:cjs": "tsc --module commonjs --outDir cjs",
+    "build:esm": "tsc --project tsconfig.esm.json --outDir esm && tsc-alias --project tsconfig.esm.json --outDir esm --resolve-full-paths --resolve-full-extension .js",
+    "build:cjs": "tsc --project tsconfig.cjs.json --outDir cjs",
     "build:watch": "npm run cleanup && npm-run-all -p \"build:esm -- -w\" \"build:cjs -- -w\""
   },
   "exports": {
@@ -38,6 +42,7 @@
     "jest": "latest",
     "npm-run-all": "^4.1.5",
     "rimraf": "^6.0.1",
+    "tsc-alias": "^1.8.16",
     "typescript": "^5.8.2"
   },
   "files": [
